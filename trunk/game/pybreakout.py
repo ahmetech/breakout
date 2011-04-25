@@ -1,4 +1,5 @@
 import pygame, math, time, soundmanager
+import pygame.transform as transform
 from pygame.locals import *
 from utilities.common import Describer
 from utilities.common import rm
@@ -136,21 +137,45 @@ class Paddle(Describer):
         self.image = pygame.image.load(imageFilename)
         self.rect = self.image.get_rect()
         self.ball = ball
+        self.angle = 0
         self.resetState()
         
     def resetState(self):
         "Paddle object is reset to the bottom center of the screen"
         self.rect = self.rect.move(PADDLE_START_LEFT,PADDLE_START_TOP)
-        
+
     def moveLeft(self, pixelsLeft):
         self.rect = self.rect.move(-pixelsLeft, 0)
+
         if self.ball.stuck:
             self.ball.rect = self.ball.rect.move(-pixelsLeft,0)
-        
+
     def moveRight(self, pixelsRight):
         self.rect = self.rect.move(pixelsRight, 0)
         if self.ball.stuck:
             self.ball.rect = self.ball.rect.move(pixelsRight,0)
+
+    def moveUp(self, pixelsUp):
+        self.rect = self.rect.move(0,-pixelsUp)
+        if self.ball.stuck:
+            self.ball.rect = self.ball.rect.move(0,-pixelsUp)
+
+    def moveDown(self, pixelsDown):
+        self.rect = self.rect.move(0,pixelsDown)
+        if self.ball.stuck:
+            self.ball.rect = self.ball.rect.move(0,pixelsDown)
+
+    @property
+    def position(self):
+        rw = transform.rotate(self.image, self.angle).get_rect().w
+        rh = transform.rotate(self.image, self.angle).get_rect().h
+        x = self.rect.x + self.rect.w/2 - rw/2
+        y = self.rect.y + self.rect.h/2 - rh/2
+        return x,y
+
+    def rotate(self, angle):
+        self.angle += angle
+        print self.angle
 
 class Brick(Describer):
     """every brick has the following
@@ -261,7 +286,8 @@ class PyBreakout(Describer):
         self.screen.fill(RGB_BLACK)
         
         #Draw Paddle and Ball
-        self.screen.blit(self.paddle.image, self.paddle.rect)
+        self.screen.blit(transform.rotate(self.paddle.image,
+                                self.paddle.angle), self.paddle.position)
         
         for ball in self.balls:
             self.screen.blit(ball.image, ball.rect)
@@ -345,23 +371,35 @@ class PyBreakout(Describer):
                 
             keys = pygame.key.get_pressed()
             mouse_x = pygame.mouse.get_pos()[0]
+            mouse_y = pygame.mouse.get_pos()[1]
             button1,button2,button3 = pygame.mouse.get_pressed()
             
             #print "mouse_x = %s"%mouse_x
-            mousePosEqual = True
-            while mousePosEqual:
-                mousePosEqual = mouse_x != self.paddle.rect.left
+            mousePosxEqual = True
+            while mousePosxEqual:
+                mousePosxEqual = mouse_x != self.paddle.rect.left
                 if mouse_x < self.paddle.rect.left:
                     self.paddle.moveLeft(1)
                 elif mouse_x > self.paddle.rect.left:
                     if self.paddle.rect.right < self.width:
                         self.paddle.moveRight(1)
                     else:
-                        mousePosEqual = False
+                        mousePosxEqual = False
+            mousePosyEqual = True
+            while mousePosyEqual:
+                mousePosyEqual = mouse_y != self.paddle.rect.top
+                if mouse_y < self.paddle.rect.top:
+                    self.paddle.moveUp(1)
+                elif mouse_y > self.paddle.rect.top:
+                    if self.paddle.rect.top < self.height:
+                        self.paddle.moveDown(1)
+                    else:
+                        mousePosyEqual = False
 
             if keys[K_SPACE] or button1:
                 if self.balls[0].stuck:
                     self.balls[0].stuck = False
+                self.paddle.rotate(1)
             elif keys[K_RETURN] or button2 or button3:
                 if (len(self.balls) <= 0) or (len(self.balls) == 1 and not self.balls[0].stuck):
                     if self.numLives >=1:
