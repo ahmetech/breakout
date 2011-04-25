@@ -1,0 +1,32 @@
+Jie Huang and Shao-Chuan Wang
+Computer Science
+Columbia University
+
+{jh3105, sw2644} AT columbia DOT edu
+
+Playing breakout by gesture.
+
+
+EXECUTION ENVIRONMENT
+=====================================
+The codes were tested under Mac OS X 10.5.8 and Windows Vista, 
+and it should be also working under Linux system.
+
+EXTERNAL PACKAGE INCLUDED
+=====================================
+We are mainly focusing on visual interface, so the prototype of 
+the game was borrowed from pybreakout, which can be downloaded 
+from http://code.google.com/p/pybreakout/source/checkout
+
+HOW TO INSTALL?
+=====================================
+You need python 2.5.1 (or newer version), OpenCV 2.1.
+
+
+HOW TO RUN?
+=====================================
+
+Start the game:
+  $ python main.py
+
+
