@@ -24,50 +24,6 @@ def handle_keyboard(key):
     return 0
 
 
-class Grammar(object):
-    def __init__(self, initGrammar=[]):
-        self.grammar = initGrammar
-        self.repeat_count = 0
-        self.not_sure_count = 0
-        self.long_threshold = 8
-        self.last_ges = gesture.Gesture('Not Sure')
-        self.start_ges = gesture.Gesture('Palm', 'Long')
-
-    def __repr__(self):
-        return repr(self.grammar)
-
-    def __eq__(self, obj):
-        return self.grammar == obj.grammar
-
-    def instantGes(self, ges):
-        if ges.hasMeaning():
-            self.not_sure_count = 0
-            last = self.last_ges
-            if last.type_ == ges.type_:
-                self.repeat_count += 1
-            else:
-                self.repeat_count = 0
-
-            if self.repeat_count >= self.long_threshold:
-                ges.timing = 'Long'
-
-            if self.grammar:
-                if last.type_ == ges.type_:
-                    self.grammar[-1] = ges
-                else:
-                    self.grammar.append(ges)
-            else:  # empty grammar needs 'Long Palm' to start to record
-                if ges == self.start_ges:
-                    self.grammar.append(ges)
-            self.last_ges = ges
-        else:
-            self.not_sure_count += 1
-            if self.not_sure_count >= self.long_threshold:
-                self.grammar = []
-                self.repeat_count = 0
-
-        return self.grammar
-
 class ImageProcessSession(object):
   """ ImageProcessSession is a high level filter manager object.
   """
@@ -79,39 +35,6 @@ class ImageProcessSession(object):
     contours = im.find_contours(img)
     return contours
 
-
-
-class ImageWriter(object):
-    def __init__(self, output_folder='.'):
-        self.output_folder = output_folder
-        if not os.path.exists(output_folder):
-            os.mkdir(output_folder)
-        self.id_ = 1
-    def write(self, bgrimg):
-        fullpath = self.output_folder + os.sep + '%.3d.png' % (self.id_,)
-        cv.SaveImage(fullpath, bgrimg)
-        self.id_ += 1
-
-def get_input_video_filename():
-    if len(sys.argv) > 1 and '-i' in sys.argv:
-        i = sys.argv.index('-i')
-        return sys.argv[i+1]
-    else:
-        return ''
-
-def get_grammar_filename():
-    if len(sys.argv) > 1 and '-g' in sys.argv:
-        i = sys.argv.index('-g')
-        return sys.argv[i+1]
-    else:
-        return ''
-
-def get_output_folder():
-    if len(sys.argv) > 1 and '-o' in sys.argv:
-        i = sys.argv.index('-o')
-        return sys.argv[i+1]
-    else:
-        return 'out'
 
 def mainLoop():
   # Setting up the window objects and environment
@@ -126,18 +49,28 @@ def mainLoop():
   initHueThreshold = 42
   initIntensityThreshold = 191
   skin_detector = skin.SkinDetector()
-  skin_detector.setHueThreshold(initHueThreshold)
-  skin_detector.setIntensityThreshold(initIntensityThreshold)
-  cv.CreateTrackbar('hueThreshold',
+  #skin_detector.setHueThreshold(initHueThreshold)
+  #skin_detector.setIntensityThreshold(initIntensityThreshold)
+  cv.CreateTrackbar('l_hueThreshold',
                     proc_win_name,
                     initHueThreshold,
                     255,
-                    skin_detector.setHueThreshold)
-  cv.CreateTrackbar('intensityThreshold',
+                    skin_detector.setHueThresholdLow)
+  cv.CreateTrackbar('h_hueThreshold',
+                    proc_win_name,
+                    initHueThreshold,
+                    255,
+                    skin_detector.setHueThresholdHigh)
+  cv.CreateTrackbar('l_intensityThreshold',
                     proc_win_name,
                     initIntensityThreshold,
                     255,
-                    skin_detector.setIntensityThreshold)
+                    skin_detector.setIntensityThresholdLow)
+  cv.CreateTrackbar('h_intensityThreshold',
+                    proc_win_name,
+                    initIntensityThreshold,
+                    255,
+                    skin_detector.setIntensityThresholdHigh)
 
   session = ImageProcessSession(skin_detector)
   while True:
@@ -157,6 +90,7 @@ def mainLoop():
         cv.Rectangle(img, (x,y), (r, b), im.color.RED)
         cv.DrawContours(img, contours, im.color.RED, im.color.GREEN, 1,
             thickness=3)
+
     cv.ShowImage(proc_win_name, img)
 
 

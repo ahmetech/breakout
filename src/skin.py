@@ -36,25 +36,29 @@ class SkinDetector(object):
     cv.PyrSegmentation(bgrimg, segmented, self.storage, 3, 188, 60)
     return segmented
 
-  def setHueThreshold(self, hueThreshold):
-    self.h_low, self.h_high = max(hueThreshold-55,0), min(hueThreshold+55,255)
+  def setHueThresholdLow(self, hueThreshold):
+    self.h_low = hueThreshold
     print self.h_low, self.h_high
 
-  def setIntensityThreshold(self, intensityThreshold):
-    self.v_low, self.v_high = max(intensityThreshold-40,0), min(intensityThreshold+40,255)
+  def setHueThresholdHigh(self, hueThreshold):
+    self.h_high = hueThreshold
+    print self.h_low, self.h_high
+
+  def setIntensityThresholdLow(self, intensityThreshold):
+    self.v_low = intensityThreshold
+    print self.v_low, self.v_high
+
+  def setIntensityThresholdHigh(self, intensityThreshold):
+    self.v_high = intensityThreshold
     print self.v_low, self.v_high
 
   def detectSkin(self, bgrimg):
     img_temp = cv.CreateImage(im.size(bgrimg), bgrimg.depth, bgrimg.nChannels)
-    #cv.SaveImage("original.png", bgrimg)
-    cv.Smooth(bgrimg, img_temp, cv.CV_MEDIAN, 15)#, 0, 20, 20)
-    #cv.SaveImage("smooth.png", img_temp)
+    cv.Smooth(bgrimg, img_temp, cv.CV_GAUSSIAN, 5, 5)
+    for i in range(3): cv.Smooth(img_temp, img_temp, cv.CV_GAUSSIAN, 5, 5)
     cv.ShowImage("Capture from camera", img_temp)
 
-    #skin_o = self._detectSkin(bgrimg)
-    #cv.SaveImage("skin_o.png", skin_o)
     skin = self._detectSkin(img_temp)
-    #cv.SaveImage("skin_s.png", skin)
     return skin
 
   def _detectSkin(self, bgrimg):
@@ -62,10 +66,11 @@ class SkinDetector(object):
     h,s,v = im.split3(bgrimg)
     skin_mask = cv.CreateImage(im.size(hsvimg), cv.IPL_DEPTH_8U, 1)
     h_mask = cv.CreateImage(im.size(hsvimg), cv.IPL_DEPTH_8U, 1)
-    v_mask = cv.CreateImage(im.size(hsvimg), cv.IPL_DEPTH_8U, 1)
+    s_mask = cv.CreateImage(im.size(hsvimg), cv.IPL_DEPTH_8U, 1)
 
-    v_mask = self.checkRange(v, self.v_low, self.v_high)
+    print self.v_low, self.v_high, self.h_low, self.h_high
+    s_mask = self.checkRange(s, self.v_low, self.v_high)
     h_mask = self.checkRange(h, self.h_low, self.h_high)    
-    cv.And(h_mask, v_mask, skin_mask)
+    cv.And(h_mask, s_mask, skin_mask)
 
     return skin_mask

@@ -112,7 +112,7 @@ def find_contours(im):
     try:
       contours = cv.FindContours(im, 
                                storage,
-                               cv.CV_RETR_TREE,
+                               cv.CV_RETR_EXTERNAL,
                                cv.CV_CHAIN_APPROX_SIMPLE)
       contours = cv.ApproxPoly(contours,
                              storage,
