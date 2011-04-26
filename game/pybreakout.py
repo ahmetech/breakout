@@ -25,102 +25,74 @@ LAST_LEVEL = 5
 
 class Ball(Describer):
     "Ball class, represents the ball object for the PyBreakout game"
-    
     def __init__(self, imageFilename):
         "Ball __init__ method creates a ball in its default position with its default states"
         self.image = pygame.image.load(imageFilename)
-        self.rect = self.image.get_rect()
-        
+        r = self.image.get_rect()
+        self.x = r.x
+        self.y = r.y
+        self.w = r.w
+        self.h = r.h
+
         #the ball has an angle from 0 to 359 degrees
-        self.speed = 1
-        self.x_dir = 2
-        self.y_dir = -1
+        self.speed = 3
+        self._angle = 45
+
         self.stuck = True
         self.resetState()
-        self.angle_map = { (-3,0):0,
-                      (-3,1):18,
-                      (-2,1):26,
-                      (-2,2):45,
-                      (-1,2):63,
-                      (-1,3):72,
-                      (0,3):90,
-                      (1,3):108,
-                      (1,2):117,
-                      (2,2):135,
-                      (2,1):154,
-                      (3,1):162,
-                      (3,0):180,
-                      (3,-1):198,
-                      (2,-1):206,
-                      (2,-2):225,
-                      (1,-2):243,
-                      (1,-3):252,
-                      (0,-3):270,
-                      (-1,-3):288,
-                      (-1,-2):296,
-                      (-2,-2):315,
-                      (-2,-1):334,
-                      (-3,-1):342,}
-        self.angle_imap = dict((v,k) for k,v in self.angle_map.iteritems())
-        self.angle_imap[360] = (-3,0)
 
     @property
-    def angle(self):
-        return self.angle_map[(self.x_dir, self.y_dir)]
+    def rect(self):
+        return pygame.Rect(int(self.x), int(self.y), self.w, self.h)
 
-    def angle2vector(self, angle):
-        if angle < 0:
+    @property
+    def x_dir(self):
+        return self.speed * math.cos(math.radians(180+self.angle))
+    @property
+    def y_dir(self):
+        return -self.speed * math.sin(math.radians(180+self.angle))
+    
+    def _getAngle(self):
+        return self._angle
+    def _setAngle(self, angle):
+        if (angle < 0):
             angle += 2*360
-        if angle >= 360:
-            angle = angle % 360
-        angs = self.angle_imap.keys()
-        diffang = map(abs, [ro-angle for ro in angs])
-        closestangle = angs[diffang.index(min(diffang))]
-        return self.angle_imap[closestangle]
+        self._angle = angle % 360
+    angle = property(_getAngle, _setAngle)
 
     def resetState(self):
         "Ball is reset to sit motionless on top of paddle, launch with Spacebar"
-        self.rect = self.rect.move(PADDLE_START_LEFT+30, PADDLE_START_TOP-self.rect.height)
-                        
+        self.x = PADDLE_START_LEFT+30
+        self.y = PADDLE_START_TOP-self.h
     def moveDown(self, pixelsDown):
         "Move the ball image down pixelsDown worth"
-        self.rect = self.rect.move(0,pixelsDown)
-        
+        self.y += pixelsDown
     def moveUp(self, pixelsUp):
         "Move the ball image up pixelsUp worth"
-        self.rect = self.rect.move(0,-pixelsUp)
-        
+        self.y -= pixelsUp
     def moveLeft(self, pixelsLeft):
         "Move the ball image left pixelsLeft worth"
-        self.rect = self.rect.move(-pixelsLeft, 0)
-        
+        self.x -= pixelsLeft
     def moveRight(self, pixelsRight):
         "Move the ball image right pixelsRight worth"
-        self.rect = self.rect.move(pixelsRight, 0)
-        
+        self.x += pixelsRight
     def autoMove(self):
         hitWall = False
         if self.stuck:
             return hitWall
         else:
-#            x_part = self.x_dir#math.cos(math.radians(self.angle))/self.speed
-            #y_part = math.sin(math.radians(self.angle))/self.speed
-#            y_part = x_part * math.tan(math.radians(self.angle))
-#            print "x_part = %s , y_part = %s"%(x_part,y_part)
-#            print self.x_dir, self.y_dir
-            
             if self.rect.left <= 0:
-                self.x_dir = abs(self.x_dir)
+                self.angle = 180 - self.angle
                 hitWall = True
             if self.rect.right >= GB_WIDTH:
-                self.x_dir = -1 * abs(self.x_dir)
+                self.angle = 180 - self.angle
                 hitWall = True
             if self.rect.top <= 0:
-                self.y_dir = abs(self.y_dir)
+                self.angle = 360 - self.angle
                 hitWall = True
 
-            #print "x_dir = %s, y_dir = %s, x = %s, y = %s"%(self.x_dir,self.y_dir,self.rect.x,self.rect.y)
-            self.rect = self.rect.move(self.x_dir, self.y_dir)
+            self.x += self.x_dir
+            self.y += self.y_dir
             return hitWall
 
 class Bonus(Describer):
@@ -154,14 +126,10 @@ class Triball(Bonus):
     
         
     def adjustBall(self,currentBall,numPixels,pybreakout):
-        currentBall.rect.top = 0
-        currentBall.rect.left = 0
-        #print "pybreakout.balls[1].rect = " + str(pybreakout.balls[1].rect)
-        currentBall.rect.move_ip(pybreakout.balls[0].rect.x,pybreakout.balls[0].rect.y+numPixels)
-        #print "pybreakout.balls[1].rect after moving to balls[0] = " + str(pybreakout.balls[1].rect)
         currentBall.stuck = False
-        currentBall.x_dir = pybreakout.balls[0].x_dir
-        currentBall.y_dir = pybreakout.balls[0].y_dir
+        currentBall.x = pybreakout.balls[0].x
+        currentBall.y = pybreakout.balls[0].y + numPixels
+        currentBall.angle = pybreakout.balls[0].angle
 
 class Slowball(Bonus):
     def __init__(self, myBrick):
@@ -177,48 +145,57 @@ class Paddle(Describer):
     
     def __init__(self, imageFilename, ball):
         self.image = pygame.image.load(imageFilename)
-        self.rect = self.image.get_rect()
+        r = self.image.get_rect()
+        self.x = r.x
+        self.y = r.y
+        self.w = r.w
+        self.h = r.h
         self.ball = ball
         self.angle = 0
         self.resetState()
+
+    @property
+    def rect(self):
+        rw = transform.rotate(self.image, self.angle).get_rect().w
+        rh = transform.rotate(self.image, self.angle).get_rect().h
+        return pygame.Rect(int(self.x), int(self.y), rw, rh)
         
     def resetState(self):
         "Paddle object is reset to the bottom center of the screen"
-        self.rect = self.rect.move(PADDLE_START_LEFT,PADDLE_START_TOP)
+        self.x = PADDLE_START_LEFT
+        self.y = PADDLE_START_TOP
 
     def moveLeft(self, pixelsLeft):
-        self.rect = self.rect.move(-pixelsLeft, 0)
-
+        self.x -= pixelsLeft
         if self.ball.stuck:
-            self.ball.rect = self.ball.rect.move(-pixelsLeft,0)
+            self.ball.moveLeft(pixelsLeft)
 
     def moveRight(self, pixelsRight):
-        self.rect = self.rect.move(pixelsRight, 0)
+        self.x += pixelsRight
         if self.ball.stuck:
-            self.ball.rect = self.ball.rect.move(pixelsRight,0)
+            self.ball.moveRight(pixelsRight)
 
     def moveUp(self, pixelsUp):
-        self.rect = self.rect.move(0,-pixelsUp)
+        self.y -= pixelsUp
         if self.ball.stuck:
-            self.ball.rect = self.ball.rect.move(0,-pixelsUp)
+            self.ball.moveUp(pixelsUp)
 
     def moveDown(self, pixelsDown):
-        self.rect = self.rect.move(0,pixelsDown)
+        self.y += pixelsDown
         if self.ball.stuck:
-            self.ball.rect = self.ball.rect.move(0,pixelsDown)
+            self.ball.moveDown(pixelsDown)
 
     @property
     def position(self):
         rw = transform.rotate(self.image, self.angle).get_rect().w
         rh = transform.rotate(self.image, self.angle).get_rect().h
-        x = self.rect.x + self.rect.w/2 - rw/2
-        y = self.rect.y + self.rect.h/2 - rh/2
+        x = self.x + self.w/2 - rw/2
+        y = self.y + self.h/2 - rh/2
         return x,y
 
     def rotate(self, angle):
         self.angle += angle
         self.angle = self.angle % 180
-        #print self.angle
 
 class Brick(Describer):
     """every brick has the following
@@ -333,7 +310,7 @@ class PyBreakout(Describer):
                                 self.paddle.angle), self.paddle.position)
         
         for ball in self.balls:
-            self.screen.blit(ball.image, ball.rect)
+            self.screen.blit(ball.image, (ball.x, ball.y))
 
         #Draw Points Label and Points String
         self.screen.blit(self.pointsLabel, (10,10))
@@ -462,7 +439,7 @@ class PyBreakout(Describer):
             if self.running:
                 self.checkBonusCollision()
                 
-                for ball in self.balls:
+                for ball in self.balls[:]:
                     self.checkBallCollision(ball)
                     hitWall = ball.autoMove()
                     if hitWall:
@@ -482,6 +459,7 @@ class PyBreakout(Describer):
                 
                 #All balls have left the gameboard, need to pause and wait for Right Click
                 # or if numLives == 0, then end game.
+                print "len: ", len(self.balls)
                 if len(self.balls) == 0:
                     self.running = False
                     self.pointsColor = RGB_RED
@@ -521,38 +499,11 @@ class PyBreakout(Describer):
             thirdFifth = self.paddle.rect.left + 24
             fourthFifth = self.paddle.rect.left + 32
 
-            #if currentBall.rect.left < firstFifth:
-                #Any incoming ball should be redirected up and left
-                #print "Hit firstFifth of paddle"
-            #    currentBall.x_dir = -1
-            #    currentBall.y_dir = -1
-            #elif currentBall.rect.left >= firstFifth and currentBall.rect.left < secondFifth:
-                #Any incoming ball that hits this area should be redirect in opposite y and opposite x
-                #print "Hit secondFifth of paddle"
-            #    currentBall.x_dir = -1 
-            #currentBall.y_dir = -1 * currentBall.y_dir
-            #elif currentBall.rect.left >= secondFifth and currentBall.rect.left < thirdFifth:
-                #Any incoming ball that hits this area should be redirect in opposite y and opposite x
-                #print "Hit thirdFifth of paddle"
-            #    currentBall.x_dir = 0
-            #    currentBall.y_dir = -1 * currentBall.y_dir
-            #elif currentBall.rect.left >= thirdFifth and currentBall.rect.left < fourthFifth:
-                #Any incoming ball that hits this area should be redirect in opposite y and opposite x
-                #print "Hit fourthFifth of paddle"
-            #    currentBall.x_dir = 1
-            #    currentBall.y_dir = -1 * currentBall.y_dir
-            #else:
-                #print "Hit fifthFifth of paddle"
-            #    currentBall.x_dir = 1
-            #    currentBall.y_dir = -1
             theta = currentBall.angle
             phi = self.paddle.angle
-            xd, yd = currentBall.angle2vector(2*phi - theta)
             
-
-            currentBall.x_dir = xd
-            currentBall.y_dir = yd
             print "2phi:",2*phi, "theta:",theta
+            currentBall.angle = 2 * phi - theta
             print currentBall.angle
             #paddle and ball collided, play appropriate sound
             
@@ -573,17 +524,21 @@ class PyBreakout(Describer):
                 
                 if(brick.rect.collidepoint(testpointright)):
                     #test if the right side of the ball collided with the brick
-                    currentBall.x_dir = -1 * abs(currentBall.x_dir)
+                    #currentBall.x_dir = -1 * abs(currentBall.x_dir)
+                    currentBall.angle = 180 - currentBall.angle
                 elif(brick.rect.collidepoint(testpointleft)):
                     #test if the left side of the ball collided with the brick
-                    currentBall.x_dir = 1 * abs(currentBall.x_dir)
+                    #currentBall.x_dir = 1 * abs(currentBall.x_dir)
+                    currentBall.angle = 180 - currentBall.angle
                 
                 if(brick.rect.collidepoint(testpointtop)):
                     #test if top of ball collided with brick
-                    currentBall.y_dir = 1 * abs(currentBall.y_dir)
+                    currentBall.angle = 360 - currentBall.angle
+                    #currentBall.y_dir = 1 * abs(currentBall.y_dir)
                 elif(brick.rect.collidepoint(testpointbottom)):
                     #test if the bottom of the ball collided with the brick
-                    currentBall.y_dir = -1 * abs(currentBall.y_dir)
+                    currentBall.angle = 360 - currentBall.angle
+                    #currentBall.y_dir = -1 * abs(currentBall.y_dir)
                 
                 self.points += brick.pointValue
                 
@@ -618,7 +573,7 @@ class PyBreakout(Describer):
         return False
     
     def endgame(self):
-        #print "endgame called!"
+        print "endgame called!"
         if self.gameOver:
             return
         self.gameOverLabel = self.font.render("GAME OVER", True, RGB_WHITE)
