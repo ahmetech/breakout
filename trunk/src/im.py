@@ -6,6 +6,7 @@
 '''
 import numpy
 import cv
+import math
 import matplotlib.pyplot as pyplot
 
 class Color(object):
@@ -114,9 +115,9 @@ def find_contours(im):
                                storage,
                                cv.CV_RETR_EXTERNAL,
                                cv.CV_CHAIN_APPROX_SIMPLE)
-      contours = cv.ApproxPoly(contours,
-                             storage,
-                             cv.CV_POLY_APPROX_DP, 3, 1)
+      #contours = cv.ApproxPoly(contours,
+      #                       storage,
+      #                       cv.CV_POLY_APPROX_DP, 3, 1)
     except cv.error, e:
       print e
       return None
@@ -128,8 +129,9 @@ def find_convex_hull(cvseq):
     """
     storage = cv.CreateMemStorage(0)
     try:
-      hull = cv.ConvexHull2(cvseq, storage, cv.CV_CLOCKWISE, 0)
+      hull = cv.ConvexHull2(cvseq, storage, cv.CV_CLOCKWISE, 1)
     except TypeError, e:
+      print "Find convex hull failed"
       return None
     return hull
 
@@ -168,6 +170,37 @@ def plot_contours(contours, shape):
     cv.SetZero(img)
     cv.DrawContours(img, contours, color.RED, color.GREEN, 1)
     cv.ShowImage('show', img)
+
+def find_finger_tip(hull,img):
+    min_y = 1000
+    min_p = (-1, -1) 
+
+    for i in range(len(hull)):
+        p = hull[i]
+        if p[1] >= min_y: continue
+        # calculate the angle between the 3 points
+        a = b = c = 0
+        l = r = i
+        lp = rp = p
+        min_distance = 20
+        while (a < min_distance):
+            l = (l-1)%len(hull)
+            lp = hull[l]  # left sibling with enough distance
+            a = math.sqrt(pow(p[0] - lp[0], 2) + pow(p[1] - lp[1], 2))
+        while (b < min_distance):
+            r = (r+1)%len(hull)
+            rp = hull[r]  # right sibling with enough distance
+            b = math.sqrt(pow(p[0] - rp[0], 2) + pow(p[1] - rp[1], 2))
+        c = math.sqrt(pow(lp[0] - rp[0], 2) + pow(lp[1] - rp[1], 2))
+        if a*a + b*b < c*c: continue  # > 90 degree
+
+        min_y = p[1]
+        min_p = p
+
+    cv.Circle(img, min_p, 5,
+            (255, 0, 255, 0),
+            cv.CV_FILLED, cv.CV_AA, 0)
+    return min_p
 
 
 if __name__=='__main__':

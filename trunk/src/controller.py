@@ -43,8 +43,8 @@ def get_hand(img):
     kernel = cv.CreateStructuringElementEx(3, 3, 0, 0, cv.CV_SHAPE_RECT)
     #cv.MorphologyEx(frame, frame, None, kernel, cv.CV_MOP_CLOSE , 7)
 #    cv.MorphologyEx(frame, frame, None, kernel, cv.CV_MOP_OPEN , 3)
-    contours = im.find_contours(frame)
-    hull = im.find_convex_hull(contours)
+    #contours = im.find_contours(frame)
+    #hull = im.find_convex_hull(contours)
     print contours
 
     #max_hull_area, max_contour_area = (0, 0)
@@ -55,7 +55,7 @@ def get_hand(img):
     #    hull = cv.ConvexHull2(contour, storage, cv.CV_CLOCKWISE, 1);
     #    maxv = cv.ContourArea(hull)
     #    contour = contour.h_next()
-    cv.DrawContours(con, contours, red, blue, 1, 3, 8)
+    #cv.DrawContours(con, contours, red, blue, 1, 3, 8)
     
 
     cv.ShowImage("result", con)

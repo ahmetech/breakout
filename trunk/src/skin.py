@@ -53,7 +53,7 @@ class SkinDetector(object):
     print self.v_low, self.v_high
 
   def detectSkin(self, bgrimg):
-    img_temp = cv.CreateImage(im.size(bgrimg), bgrimg.depth, bgrimg.nChannels)
+    img_temp = cv.CreateImage(im.size(bgrimg), 8, 3)
     cv.Smooth(bgrimg, img_temp, cv.CV_GAUSSIAN, 5, 5)
     for i in range(3): cv.Smooth(img_temp, img_temp, cv.CV_GAUSSIAN, 5, 5)
     cv.ShowImage("Capture from camera", img_temp)
@@ -62,15 +62,20 @@ class SkinDetector(object):
     return skin
 
   def _detectSkin(self, bgrimg):
-    hsvimg = im.bgr2hsv(bgrimg)
-    h,s,v = im.split3(bgrimg)
-    skin_mask = cv.CreateImage(im.size(hsvimg), cv.IPL_DEPTH_8U, 1)
-    h_mask = cv.CreateImage(im.size(hsvimg), cv.IPL_DEPTH_8U, 1)
-    s_mask = cv.CreateImage(im.size(hsvimg), cv.IPL_DEPTH_8U, 1)
-
-    print self.v_low, self.v_high, self.h_low, self.h_high
-    s_mask = self.checkRange(s, self.v_low, self.v_high)
-    h_mask = self.checkRange(h, self.h_low, self.h_high)    
-    cv.And(h_mask, s_mask, skin_mask)
+    #hsvimg = im.bgr2hsv(bgrimg)
+    hsvimg = cv.CreateImage((bgrimg.width, bgrimg.height), 8, 3)
+    cv.CvtColor(bgrimg, hsvimg, cv.CV_RGB2HSV)
+    #h,s,v = im.split3(bgrimg)
+    skin_mask = cv.CreateImage((bgrimg.width, bgrimg.height), 8, 1)
+    low = (self.h_low, self.v_low, 0)
+    high = (self.h_high, self.v_high, 256)
+    cv.InRangeS(hsvimg, low, high, skin_mask) 
+    cv.ShowImage("inrange", skin_mask)
+    #h_mask = cv.CreateImage(im.size(hsvimg), cv.IPL_DEPTH_8U, 1)
+    #s_mask = cv.CreateImage(im.size(hsvimg), cv.IPL_DEPTH_8U, 1)
+    #print self.v_low, self.v_high, self.h_low, self.h_high
+    #s_mask = self.checkRange(s, self.v_low, self.v_high)
+    #h_mask = self.checkRange(h, self.h_low, self.h_high)    
+    #cv.And(h_mask, s_mask, skin_mask)
 
     return skin_mask
