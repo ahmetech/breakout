@@ -103,7 +103,7 @@ def mainLoop():
         break
     cv.Flip(bgrimg, None, 1)
     
-    session.process(bgrimg)
+    #session.process(bgrimg)
     contours = session.process(bgrimg)
 
     img = cv.CreateImage((bgrimg.width, bgrimg.height), 8, 3)
