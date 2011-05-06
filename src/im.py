@@ -75,9 +75,47 @@ def merge3(b,g,r):
   img = cv.CreateImage(size, cv.IPL_DEPTH_8U, 3)
   cv.Merge(b,g,r,None,img)
   return img
-  
+
+def newgray(cvimg_or_size):
+  size = None
+  if isinstance(cvimg_or_size, (tuple, list)):
+    size = tuple(cvimg_or_size)
+  else:
+    size = (cvimg_or_size.width, cvimg_or_size.height)
+  return cv.CreateImage(size, cv.IPL_DEPTH_8U, 1)
+
+
 def size(cvimg):
   return (cvimg.width, cvimg.height)
+
+def resize(src, width=None, height=None):
+  assert width or height
+  if not width:
+     width = int(height * float(src.width)/float(src.height))
+  if not height:
+     height = int(width * float(src.height)/float(src.width))
+  
+  img = cv.CreateImage((width, height), src.depth, src.nChannels)
+  cv.Resize(src, img)
+  return img
+
+def clone(src, _type='gray2bgr'):
+    """
+        Clone the image.
+        @param _type: a string, and it can be one of the following:
+            "gray2bgr"
+        @returns: the cloned image
+    """
+    if _type.lower() == "gray2bgr":
+        ret = cv.CreateImage((src.width, src.height), cv.IPL_DEPTH_8U, 3)
+        r = cv.CloneImage(src)
+        g = cv.CloneImage(src)
+        b = cv.CloneImage(src)
+        cv.Merge(r,g,b,None,ret)
+        return ret
+    else:
+        raise ValueError("Unknown _type value.")
+
 
 def test_funcs():
 
@@ -103,6 +141,16 @@ def test_funcs():
   (n, bins) = numpy.histogram(h.flatten(), bins=30)
   binc = .5*(bins[1:]+bins[:-1])
   print binc[n.argmax()]
+
+def vertices(contour):
+  vt = set([])
+  try:
+      while True:
+          vt = vt.union(set(list(contour)))
+          contour = contour.h_next()
+  except (TypeError, cv.error), e:
+      return list(vt)
+  return list(vt)
 
 
 def find_contours(im):
