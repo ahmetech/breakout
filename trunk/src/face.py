@@ -8,7 +8,9 @@
 import cv
 import im
 
-def detect_faces(grayscale):
+cascade = cv.Load('haarcascade_frontalface_alt.xml')
+def detect_faces(bgrimg):
+    grayscale = im.bgr2gray(bgrimg)
     # create storage
     storage = cv.CreateMemStorage(0)
  
@@ -16,7 +18,6 @@ def detect_faces(grayscale):
     cv.EqualizeHist(grayscale, grayscale)
  
     # detect objects
-    cascade = cv.Load('haarcascade_frontalface_alt.xml')
     faces = cv.HaarDetectObjects(cv.GetMat(grayscale), cascade, storage, 1.2, 2, 0, (100, 100))
     
     if faces:
@@ -25,10 +26,10 @@ def detect_faces(grayscale):
         return None
 
 lastrects = None
-def blockfacemask(grayimage):
+def blockfacemask(bgrimg):
     global lastrects
-    rects = detect_faces(grayimage)
-    newimg = im.newgray(grayimage)
+    rects = detect_faces(bgrimg)
+    newimg = im.newgray(bgrimg)
     cv.Set(newimg, 255)
     if rects:
       lastrects = rects
