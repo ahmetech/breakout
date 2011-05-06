@@ -6,6 +6,7 @@
 '''
 import cv
 import im
+import face
 from constants import SDC
 
 class SkinDetector(object):
@@ -71,6 +72,9 @@ class SkinDetector(object):
     high = (self.h_high, self.v_high, 256)
     cv.InRangeS(hsvimg, low, high, skin_mask) 
     cv.ShowImage("inrange", skin_mask)
+     
+    face_mask = face.blockfacemask(bgrimg)
+    cv.And(skin_mask,  face_mask, skin_mask)
     #h_mask = cv.CreateImage(im.size(hsvimg), cv.IPL_DEPTH_8U, 1)
     #s_mask = cv.CreateImage(im.size(hsvimg), cv.IPL_DEPTH_8U, 1)
     #print self.v_low, self.v_high, self.h_low, self.h_high
