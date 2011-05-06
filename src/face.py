@@ -25,10 +25,20 @@ def detect_faces(bgrimg):
     else:
         return None
 
+def addheights(rects):
+   newrects=[]
+   if not rects:
+      return None
+   for rect in rects:
+      x,y,w,h = rect
+      newrects.append((x,y,w,int(h*1.2)))
+   return newrects
+
 lastrects = None
 def blockfacemask(bgrimg):
     global lastrects
     rects = detect_faces(bgrimg)
+    rects = addheights(rects)
     newimg = im.newgray(bgrimg)
     cv.Set(newimg, 255)
     if rects:
