@@ -33,6 +33,8 @@ class ImageProcessSession(object):
   def __init__(self, skin_detector, motion_detector):
     self.skin_detector = skin_detector
     self.motion_detector = motion_detector
+    self.history = []
+    
 
   def get_motion_mask(self, img):
       return self.motion_detector.get_motion_mask(img)
@@ -55,6 +57,14 @@ class ImageProcessSession(object):
     #cv.ShowImage("test3", img)
     contours = im.find_contours(img)
     return contours
+
+  def translate(self, points, img):
+      if len(points) < 2: return
+      cv.Line(img, points[0], points[1], im.color.BLUE, 3) 
+      center = ((points[0][0] + points[1][0])/2, (points[0][1] +
+          points[1][1])/2)
+      cv.Circle(img, center, 10, im.color.BLUE, 3)
+
 
 
 def mainLoop():
@@ -102,38 +112,27 @@ def mainLoop():
     if not bgrimg:
         break
     cv.Flip(bgrimg, None, 1)
-    
+
     #session.process(bgrimg)
     contours = session.process(bgrimg)
 
     img = cv.CreateImage((bgrimg.width, bgrimg.height), 8, 3)
+
     if contours:
-        x, y, r, b = im.find_max_rectangle(contours)
-        # adjust ratio
-        ratio = abs(float(y-b)/(x-r))
-        if ratio > 2:
-            b = y + abs(x-r)*2
+        max_contours = im.top_three_max_contours(contours)
 
-        cv.Rectangle(img, (x,y), (r, b), im.color.RED)
-        rotate_center = ((x+r)/2, y+100)
-        # draw center
-        cv.Circle(img, rotate_center, 5,
-             (255, 0, 255, 0),
-             cv.CV_FILLED, cv.CV_AA, 0)
+    if max_contours:
+        cts = []
+        for ct in max_contours:
+            if ct[1]: cts.append(ct[1])
+        finger_tips = im.get_finger_tips(cts, img)
 
-        (area, max_contours) = im.max_area(contours)
-        cv.DrawContours(img, max_contours, im.color.RED, im.color.GREEN, 1,
-            thickness=3)
-        # Draw the convex hull as a closed polyline in green
-        hull = im.find_convex_hull(max_contours)
-        if (hull != None):
-            cv.PolyLine(img, [hull], 1, cv.RGB(0,255,0), 3, cv.CV_AA)
-            tip = im.find_finger_tip(hull, img)
+    session.translate(finger_tips, img)
     cv.ShowImage(proc_win_name, img)
 
 
 if __name__=='__main__':
     try:
         mainLoop()
-    except (TypeError, cv.error), e:
-        print "out error", e 
+    except Exception, e:
+        print "Unkown error: ", e 
