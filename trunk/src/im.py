@@ -119,7 +119,6 @@ def find_contours(im):
       #                       storage,
       #                       cv.CV_POLY_APPROX_DP, 3, 1)
     except cv.error, e:
-      print e
       return None
     return contours
 
@@ -157,6 +156,28 @@ def max_area(contours):
       return max_area, max_contours
     return max_area, max_contours
 
+def top_three_max_contours(contours):
+    max_contours = [(0, None), (0, None), (0, None)]
+
+    try:
+      while True:
+          area = cv.ContourArea(contours)
+          if area > max_contours[0][0]:
+              max_contours[0] = (area, contours)
+              max_contours.sort(cmp_contours)
+          contours = contours.h_next()
+    except (TypeError, cv.error), e:
+      return max_contours
+    return max_contours
+
+def cmp_contours(c1, c2):
+    if (c1[0] == c2[0]): 
+        return 0
+    elif (c1[0] > c2[0]): 
+        return 1
+    else:
+        return -1
+
 def find_max_rectangle(contours):
     max_a, contours = max_area(contours)
     left, top, w, h = cv.BoundingRect(contours)
@@ -175,6 +196,8 @@ def find_finger_tip(hull,img):
     min_y = 1000
     min_p = (-1, -1) 
 
+    if len(hull) < 4: return min_p
+
     for i in range(len(hull)):
         p = hull[i]
         if p[1] >= min_y: continue
@@ -185,23 +208,51 @@ def find_finger_tip(hull,img):
         min_distance = 20
         while (a < min_distance):
             l = (l-1)%len(hull)
+            if l == i: break # finished one round and not find a suitable point
             lp = hull[l]  # left sibling with enough distance
             a = math.sqrt(pow(p[0] - lp[0], 2) + pow(p[1] - lp[1], 2))
         while (b < min_distance):
             r = (r+1)%len(hull)
+            if r == i: break # finished one round and not find a suitable point
             rp = hull[r]  # right sibling with enough distance
             b = math.sqrt(pow(p[0] - rp[0], 2) + pow(p[1] - rp[1], 2))
         c = math.sqrt(pow(lp[0] - rp[0], 2) + pow(lp[1] - rp[1], 2))
-        if a*a + b*b < c*c: continue  # > 90 degree
-
+        theta = math.acos(float(a*a + b*b - c*c)/(2*a*b))
+        if theta*3 > math.pi: continue # > 60 degree
         min_y = p[1]
         min_p = p
-
     cv.Circle(img, min_p, 5,
             (255, 0, 255, 0),
             cv.CV_FILLED, cv.CV_AA, 0)
     return min_p
 
+def get_finger_tips(contours, img):
+    finger_tips = []
+    for ct in contours: 
+        if not ct: break
+
+        x, y, r, b = find_max_rectangle(ct)
+        # adjust ratio to at least 1/2
+        ratio = abs(float(y-b)/(x-r))
+        if ratio > 2:
+            b = y + abs(x-r)*2
+        cv.Rectangle(img, (x,y), (r, b), color.RED)
+        # draw center
+        rotate_center = ((x+r)/2, y+100)
+        cv.Circle(img, rotate_center, 5,
+             (255, 0, 255, 0),
+             cv.CV_FILLED, cv.CV_AA, 0)
+
+        cv.DrawContours(img, ct, color.RED, color.GREEN, 1,
+            thickness=3)
+        # Draw the convex hull as a closed polyline in green
+        hull = find_convex_hull(ct)
+        if (hull != None):
+            cv.PolyLine(img, [hull], 1, cv.RGB(0,255,0), 3, cv.CV_AA)
+            tip = find_finger_tip(hull, img)
+            if tip != (-1, -1): 
+                finger_tips.append(tip)
+    return finger_tips
 
 if __name__=='__main__':
   im = cv.LoadImage('orig.png')

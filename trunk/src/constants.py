@@ -26,5 +26,5 @@ class SDC(object):
     ''' Skin SkinDetector Constants. '''
     GSD_HUE_LT = 91
     GSD_HUE_UT = 115
-    GSD_INTENSITY_LT = 90
+    GSD_INTENSITY_LT = 40
     GSD_INTENSITY_UT = 180
