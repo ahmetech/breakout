@@ -204,8 +204,8 @@ def max_area(contours):
       return max_area, max_contours
     return max_area, max_contours
 
-def top_three_max_contours(contours):
-    max_contours = [(0, None), (0, None), (0, None)]
+def top_two_max_contours(contours):
+    max_contours = [(0, None), (0, None)]
 
     try:
       while True:
@@ -250,23 +250,23 @@ def find_finger_tip(hull,img):
         p = hull[i]
         if p[1] >= min_y: continue
         # calculate the angle between the 3 points
-        a = b = c = 0
-        l = r = i
-        lp = rp = p
-        min_distance = 20
-        while (a < min_distance):
-            l = (l-1)%len(hull)
-            if l == i: break # finished one round and not find a suitable point
-            lp = hull[l]  # left sibling with enough distance
-            a = math.sqrt(pow(p[0] - lp[0], 2) + pow(p[1] - lp[1], 2))
-        while (b < min_distance):
-            r = (r+1)%len(hull)
-            if r == i: break # finished one round and not find a suitable point
-            rp = hull[r]  # right sibling with enough distance
-            b = math.sqrt(pow(p[0] - rp[0], 2) + pow(p[1] - rp[1], 2))
-        c = math.sqrt(pow(lp[0] - rp[0], 2) + pow(lp[1] - rp[1], 2))
-        theta = math.acos(float(a*a + b*b - c*c)/(2*a*b))
-        if theta*3 > math.pi: continue # > 60 degree
+        #a = b = c = 0
+        #l = r = i
+        #lp = rp = p
+        #min_distance = 20
+        #while (a < min_distance):
+        #    l = (l-1)%len(hull)
+        #    if l == i: break # finished one round and not find a suitable point
+        #    lp = hull[l]  # left sibling with enough distance
+        #    a = math.sqrt(pow(p[0] - lp[0], 2) + pow(p[1] - lp[1], 2))
+        #while (b < min_distance):
+        #    r = (r+1)%len(hull)
+        #    if r == i: break # finished one round and not find a suitable point
+        #    rp = hull[r]  # right sibling with enough distance
+        #    b = math.sqrt(pow(p[0] - rp[0], 2) + pow(p[1] - rp[1], 2))
+        #c = math.sqrt(pow(lp[0] - rp[0], 2) + pow(lp[1] - rp[1], 2))
+        #theta = math.acos(float(a*a + b*b - c*c)/(2*a*b))
+        #if theta*2 > math.pi: continue # > 60 degree
         min_y = p[1]
         min_p = p
     cv.Circle(img, min_p, 5,

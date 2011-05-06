@@ -11,6 +11,8 @@ import im
 import numpy
 import skin, gesture
 import motion2
+import math
+import traceback
 from constants import SDC
 
 
@@ -34,7 +36,9 @@ class ImageProcessSession(object):
     self.skin_detector = skin_detector
     self.motion_detector = motion_detector
     self.history = []
-    
+    self.buf = []
+    for i in range(5):
+        self.history.append( ((-1, -1), 0.0) )
 
   def get_motion_mask(self, img):
       return self.motion_detector.get_motion_mask(img)
@@ -61,9 +65,16 @@ class ImageProcessSession(object):
   def translate(self, points, img):
       if len(points) < 2: return
       cv.Line(img, points[0], points[1], im.color.BLUE, 3) 
-      center = ((points[0][0] + points[1][0])/2, (points[0][1] +
-          points[1][1])/2)
-      cv.Circle(img, center, 10, im.color.BLUE, 3)
+      polar = self.__calc_new_position(points)
+      print polar
+      cv.Circle(img, polar[0], 10, im.color.BLUE, 3)
+
+  def __calc_new_position(self, points):
+      p1, p2 = points[0], points[1]
+      center = ((p1[0] + p2[0])/2, (p1[1] + p2[1])/2)
+      theta = math.atan(float(p1[1] - p2[1])/(p2[0] - p1[0]))
+      return (center, theta)
+
 
 
 
@@ -119,7 +130,7 @@ def mainLoop():
     img = cv.CreateImage((bgrimg.width, bgrimg.height), 8, 3)
 
     if contours:
-        max_contours = im.top_three_max_contours(contours)
+        max_contours = im.top_two_max_contours(contours)
 
     if max_contours:
         cts = []
@@ -135,4 +146,5 @@ if __name__=='__main__':
     try:
         mainLoop()
     except Exception, e:
+        traceback.print_stack()
         print "Unkown error: ", e 
