@@ -143,13 +143,14 @@ class Slowball(Bonus):
 class Paddle(Describer):
     "A Paddle object"
     
-    def __init__(self, imageFilename, ball):
+    def __init__(self, imageFilename, ball, maxsize=(GB_WIDTH, GB_HEIGHT)):
         self.image = pygame.image.load(imageFilename)
         r = self.image.get_rect()
         self.x = r.x
         self.y = r.y
         self.w = r.w
         self.h = r.h
+        self.maxsize = maxsize
         self.ball = ball
         self.angle = 0
         self.resetState()
@@ -167,21 +168,25 @@ class Paddle(Describer):
 
     def moveLeft(self, pixelsLeft):
         self.x -= pixelsLeft
+        self.x = max(self.x, 0)
         if self.ball.stuck:
             self.ball.moveLeft(pixelsLeft)
 
     def moveRight(self, pixelsRight):
         self.x += pixelsRight
+        self.x = min(self.x+self.w, self.maxsize[0]) - self.w
         if self.ball.stuck:
             self.ball.moveRight(pixelsRight)
 
     def moveUp(self, pixelsUp):
         self.y -= pixelsUp
+        self.y = max(self.y, 0)
         if self.ball.stuck:
             self.ball.moveUp(pixelsUp)
 
     def moveDown(self, pixelsDown):
         self.y += pixelsDown
+        self.y = min(self.y, self.maxsize[1])
         if self.ball.stuck:
             self.ball.moveDown(pixelsDown)
 
@@ -353,7 +358,7 @@ class PyBreakout(Describer):
         
         self.balls = []
         self.balls.append(Ball(rm.getImagePath("ball-mini.png")))
-        self.paddle = Paddle(rm.getImagePath("paddle.png"),self.balls[0])
+        self.paddle = Paddle(rm.getImagePath("paddle.png"),self.balls[0], self.size)
         
         self.pointsColor = RGB_WHITE
         self.running = True
