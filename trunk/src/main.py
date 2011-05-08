@@ -132,7 +132,13 @@ class Entry(object):
      proc_win = cv.NamedWindow(self.proc_win_name, 1)
      cam_win = cv.NamedWindow(self.cam_win_name, 1)
 
+  def setCallbacks(self, moveCallback, setAngleCallback):
+     self.move = moveCallback
+     self.setAngle = setAngleCallback
+
   def __init__(self):
+     self.move = None
+     self.setAngle = None
      self.initWindows()
      self.cam = cv.CaptureFromCAM(0)
      skin_detector = skin.SkinDetector()
@@ -185,6 +191,7 @@ class Entry(object):
     self.session.translate(finger_tips, img)
     if self.debug == 1: cv.ShowImage(self.proc_win_name, img)
     return True
+
 
 
 def mainLoop():

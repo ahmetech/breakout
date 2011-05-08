@@ -224,7 +224,7 @@ class Brick(Describer):
 class PyBreakout(Describer):
     "This is the main game class for PyBreakout"
     
-    def __init__(self):
+    def __init__(self, cventry):
         self.running = False        
         
         self.size = GB_WIDTH, GB_HEIGHT
@@ -235,6 +235,8 @@ class PyBreakout(Describer):
         
         self.startGame()
         self.initializeScreen()
+        self.cventry = cventry
+        cventry.setCallbacks(self.onMove, self.onSetAngle)
         
     def initializeScreen(self):
         #Create Gameboard with RGB_BLACK background
@@ -376,6 +378,12 @@ class PyBreakout(Describer):
         self.levelLabel = self.font.render("Level: ", True, RGB_WHITE)
         self.levelString = self.font.render(str(self.level), True, RGB_WHITE)
         self.gameOver = False
+
+    def onMove(dx, dy):
+        pass
+
+    def onSetAngle(angle):
+        pass
         
     def play(self):
         "The main game loop occurs here, checks for keyboard input, updates game state, etc..."
@@ -386,6 +394,8 @@ class PyBreakout(Describer):
         pygame.event.set_grab(True)
         
         while True:
+            self.cventry.run()
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: exit()
                 
