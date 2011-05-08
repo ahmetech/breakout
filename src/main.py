@@ -41,8 +41,8 @@ class ImageProcessSession(object):
     self.buf = []
     self.max_degree_change = 0.2
     self.max_pos_change = 80
-
-    for i in range(5):
+    self.history_size = 5
+    for i in range(self.history_size):
         self.history.append( ((-1, -1), 0.0) )
 
   def get_motion_mask(self, img):
@@ -93,8 +93,7 @@ class ImageProcessSession(object):
       if pos_change > self.max_pos_change or degree_change >\
           self.max_degree_change: 
               self.buf.append(polar)
-              if len(self.buf) > len(self.history): self.buf.pop(0)
-              print "put to buf"
+              if len(self.buf) > self.history_size: self.buf.pop(0)
               if self.__check_buffer_stable():
                   print "buf is determined to be stabe, replace history with buf"
                   self.history = self.buf
@@ -120,8 +119,8 @@ class ImageProcessSession(object):
 
   def __check_buffer_stable(self):
       stable = True
-      if len(self.buf) < len(self.history): return False
-      for i in range(len(history) - 1):
+      if len(self.buf) < self.history_size: return False
+      for i in range(self.history_size - 1):
           p1 = self.buf[i][0]
           p2 = self.buf[i+1][0]
           d1 = self.buf[i][1]
