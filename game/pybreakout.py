@@ -379,11 +379,11 @@ class PyBreakout(Describer):
         self.levelString = self.font.render(str(self.level), True, RGB_WHITE)
         self.gameOver = False
 
-    def onMove(dx, dy):
-        pass
+    def onMove(self, dx, dy):
+        print "(x,y): ",dx, dy
 
-    def onSetAngle(angle):
-        pass
+    def onSetAngle(self, angle):
+        print "angle: ", angle
         
     def play(self):
         "The main game loop occurs here, checks for keyboard input, updates game state, etc..."
