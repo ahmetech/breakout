@@ -108,59 +108,57 @@ class ImageProcessSession(object):
           d2 = self.buf[i+1][1]
 
 
-            
-
-
-
-def mainLoop():
+class Entry(object):
   # Setting up the window objects and environment
   debug = 1 
   proc_win_name = "Processing window"
   cam_win_name = "Capture from camera"
-  proc_win = cv.NamedWindow(proc_win_name, 1)
-  cam_win = cv.NamedWindow(cam_win_name, 1)
-  cam = cv.CaptureFromCAM(0)
-  cv.SetMouseCallback(proc_win_name, handle_mouse)
-  cv.SetMouseCallback(cam_win_name, handle_mouse)
   msdelay = 3
-  initHueThreshold = 42
-  initIntensityThreshold = 191
-  skin_detector = skin.SkinDetector()
-  motion_util = motion2.MotionUtility()
-  cv.CreateTrackbar('l_hueThreshold',
-                    proc_win_name,
+
+  def initWindows(self):
+     cv.SetMouseCallback(self.proc_win_name, handle_mouse)
+     cv.SetMouseCallback(self.cam_win_name, handle_mouse)
+     proc_win = cv.NamedWindow(self.proc_win_name, 1)
+     cam_win = cv.NamedWindow(self.cam_win_name, 1)
+
+  def __init__(self):
+     self.initWindows()
+     self.cam = cv.CaptureFromCAM(0)
+     skin_detector = skin.SkinDetector()
+     motion_util = motion2.MotionUtility()
+     cv.CreateTrackbar('l_hueThreshold',
+                    self.proc_win_name,
                     SDC.GSD_HUE_LT,
                     255,
                     skin_detector.setHueThresholdLow)
-  cv.CreateTrackbar('h_hueThreshold',
-                    proc_win_name,
+     cv.CreateTrackbar('h_hueThreshold',
+                    self.proc_win_name,
                     SDC.GSD_HUE_UT,
                     255,
                     skin_detector.setHueThresholdHigh)
-  cv.CreateTrackbar('l_intensityThreshold',
-                    proc_win_name,
+     cv.CreateTrackbar('l_intensityThreshold',
+                    self.proc_win_name,
                     SDC.GSD_INTENSITY_LT,
                     255,
                     skin_detector.setIntensityThresholdLow)
-  cv.CreateTrackbar('h_intensityThreshold',
-                    proc_win_name,
+     cv.CreateTrackbar('h_intensityThreshold',
+                    self.proc_win_name,
                     SDC.GSD_INTENSITY_UT,
                     255,
                     skin_detector.setIntensityThresholdHigh)
+     self.session = ImageProcessSession(skin_detector, motion_util)
 
-  session = ImageProcessSession(skin_detector, motion_util)
-  while True:
-    k = cv.WaitKey(msdelay)
+  def run(self):
+    k = cv.WaitKey(self.msdelay)
     k = chr(k) if k > 0 else 0
     if handle_keyboard(k) < 0:
-        break
-    bgrimg = cv.QueryFrame(cam)
+        return False
+    bgrimg = cv.QueryFrame(self.cam)
     if not bgrimg:
-        break
+        return False
     cv.Flip(bgrimg, None, 1)
 
-    #session.process(bgrimg)
-    contours = session.process(bgrimg)
+    contours = self.session.process(bgrimg)
 
     img = cv.CreateImage((bgrimg.width, bgrimg.height), 8, 3)
 
@@ -173,9 +171,16 @@ def mainLoop():
             if ct[1]: cts.append(ct[1])
         finger_tips = im.get_finger_tips(cts, img)
 
-    session.translate(finger_tips, img)
-    if debug == 1: cv.ShowImage(proc_win_name, img)
+    self.session.translate(finger_tips, img)
+    if self.debug == 1: cv.ShowImage(self.proc_win_name, img)
+    return True
 
+
+def mainLoop():
+    entry = Entry()
+    while True:
+       if not entry.run():
+          break
 
 if __name__=='__main__':
     try:
