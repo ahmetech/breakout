@@ -33,13 +33,14 @@ def handle_keyboard(key):
 class ImageProcessSession(object):
   """ ImageProcessSession is a high level filter manager object.
   """
-  def __init__(self, skin_detector, motion_detector):
+  def __init__(self, skin_detector, motion_detector, entry):
     self.skin_detector = skin_detector
     self.motion_detector = motion_detector
+    self.entry = entry
     self.history = []
     self.buf = []
     self.max_degree_change = 0.2
-    self.max_pos_change = 50
+    self.max_pos_change = 80
 
     for i in range(5):
         self.history.append( ((-1, -1), 0.0) )
@@ -76,7 +77,10 @@ class ImageProcessSession(object):
   def __calc_new_position(self, points):
       p1, p2 = points[0], points[1]
       center = ((p1[0] + p2[0])/2, (p1[1] + p2[1])/2)
-      theta = math.atan(float(p1[1] - p2[1])/(p2[0] - p1[0]))
+      if p2[0] - p1[0] == 0: 
+          theta = math.pi / 2
+      else:
+          theta = math.atan(float(p1[1] - p2[1])/(p2[0] - p1[0]))
       return (center, theta)
 
   def update_game(self, polar):
@@ -84,8 +88,7 @@ class ImageProcessSession(object):
       degree_change = abs(polar[1] - last[1]) 
       p1 = last[0]
       p2 = polar[0]
-      pos_change = math.sqrt((p1[0] - p2[0])*(p1[0] - p2[0]) + (p1[1] -
-          p2[1])*(p1[1] - p2[1]))
+      pos_change = util.get_point_distance(p1, p2)
       print pos_change, degree_change
       if pos_change > self.max_pos_change or degree_change >\
           self.max_degree_change: 
@@ -96,13 +99,25 @@ class ImageProcessSession(object):
                   print "ss"
                   self.history = self.buf
                   self.buf = []
-              else: print "not ssssssssssssssssss"
+              else:
+                  print "not ssssssssssssssssss"
+                  return
 
       else:
           self.history.append(polar)
           self.history.pop(0)
           self.buf = []
           print "put into history"
+
+      current = self.history[-1]
+      last = self.history[-2]
+      right = current[0][0] - last[0][0]
+      down = current[0][1] - last[0][1]
+      theta = current[1]
+      self.entry.move(right, down)
+      self.entry.setAngle(theta/math.pi*180)
+
+
 
   def __check_buffer_stable(self):
       stable = True
@@ -118,11 +133,6 @@ class ImageProcessSession(object):
               stable = False
       return stable
 
-def onMove(x, y):
-  print '(x,y):', x,y
-
-def onSetAngle(angle):
-  print 'angle: ', angle
 
 class Entry(object):
   # Setting up the window objects and environment
@@ -142,8 +152,8 @@ class Entry(object):
      self.setAngle = setAngleCallback
 
   def __init__(self):
-     self.move = onMove
-     self.setAngle = onSetAngle
+     self.move = None
+     self.setAngle = None
      self.initWindows()
      self.cam = cv.CaptureFromCAM(0)
      skin_detector = skin.SkinDetector()
@@ -168,7 +178,7 @@ class Entry(object):
                     SDC.GSD_INTENSITY_UT,
                     255,
                     skin_detector.setIntensityThresholdHigh)
-     self.session = ImageProcessSession(skin_detector, motion_util)
+     self.session = ImageProcessSession(skin_detector, motion_util, self)
 
   def run(self):
     k = cv.WaitKey(self.msdelay)
@@ -184,6 +194,7 @@ class Entry(object):
 
     img = cv.CreateImage((bgrimg.width, bgrimg.height), 8, 3)
 
+    max_contours = None
     if contours:
         max_contours = im.top_two_max_contours(contours)
 
@@ -193,8 +204,8 @@ class Entry(object):
             if ct[1]: cts.append(ct[1])
         finger_tips = im.get_finger_tips(cts, img)
 
-    self.session.translate(finger_tips, img)
-    if self.debug == 1: cv.ShowImage(self.proc_win_name, img)
+        self.session.translate(finger_tips, img)
+        if self.debug == 1: cv.ShowImage(self.proc_win_name, img)
     return True
 
 
