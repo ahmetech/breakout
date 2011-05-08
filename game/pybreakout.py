@@ -410,9 +410,8 @@ class PyBreakout(Describer):
         #Excellent suggestions from Peter Nosgoth to have tighter control over Mouse
         #pygame.mouse.set_visible(False)
         #pygame.event.set_grab(True)
-        
+        i = 0
         while True:
-            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: exit()
                 
@@ -467,7 +466,9 @@ class PyBreakout(Describer):
             #    exit()
         
             if self.running:
-                self.cventry.run()
+                if (i % 4 == 0):
+                    self.cventry.run()
+                i += 1
                 self.checkBonusCollision()
                 
                 for ball in self.balls[:]:

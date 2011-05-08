@@ -60,7 +60,7 @@ class ImageProcessSession(object):
     img = self.skin_detector.detectSkin(bgrimg)
     #cv.ShowImage("test2", img)
     #cv.Convert(img, bgrimg)
-    motion_mask = self.get_motion_mask(bgrimg)
+    #motion_mask = self.get_motion_mask(bgrimg)
     #cv.ShowImage("motion", motion_mask)
     #cv.And(img, motion_mask, img)
     #cv.ShowImage("test3", img)
