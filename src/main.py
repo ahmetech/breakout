@@ -23,7 +23,7 @@ def handle_mouse(event, x, y, flags, param):
 def handle_keyboard(key):
     ''' return 0 if normally handle the key else -1.'''
     if key == 'q':
-      return -1
+      sys.exit(0)
     elif key == 'c':
       print 'calibrate the skin detection parameters...'
       self.skin_detector.toggle_calibrate()
