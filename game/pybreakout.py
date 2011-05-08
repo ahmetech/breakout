@@ -197,6 +197,10 @@ class Paddle(Describer):
         self.angle += angle
         self.angle = self.angle % 180
 
+    def setAngle(self, angle):
+        self.angle = angle % 180
+
+
 class Brick(Describer):
     """every brick has the following
     an image: filename
@@ -392,6 +396,7 @@ class PyBreakout(Describer):
 
     def onSetAngle(self, angle):
         print "angle: ", angle
+        self.paddle.setAngle(angle)
         
     def play(self):
         "The main game loop occurs here, checks for keyboard input, updates game state, etc..."
