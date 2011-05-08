@@ -151,7 +151,7 @@ def max_area(contours):
               max_area = area
               max_contours = contours
           contours = contours.h_next()
-    except TypeError, e:
+    except (TypeError, cv.error), e:
       return max_area, max_contours
     return max_area, max_contours
 
