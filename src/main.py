@@ -116,7 +116,7 @@ class ImageProcessSession(object):
           delta_d = abs(d1 - d2)
           if delta_p > self.max_pos_change or delta_d > self.max_degree_change:
               stable = False
-      return True
+      return stable
 
 
 class Entry(object):
