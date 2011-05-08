@@ -403,8 +403,8 @@ class PyBreakout(Describer):
         self.running = True
         lastLevelUpTime = time.time()
         #Excellent suggestions from Peter Nosgoth to have tighter control over Mouse
-        pygame.mouse.set_visible(False)
-        pygame.event.set_grab(True)
+        #pygame.mouse.set_visible(False)
+        #pygame.event.set_grab(True)
         
         while True:
             self.cventry.run()
@@ -512,7 +512,7 @@ class PyBreakout(Describer):
                     #else:
                         #print "reached max speed"
                 
-            pygame.time.wait(STARTSPEED - self.speed)
+            #pygame.time.wait(STARTSPEED - self.speed)
         
     def checkBallCollision(self, currentBall):
         if(currentBall.rect.colliderect(self.paddle.rect)):
