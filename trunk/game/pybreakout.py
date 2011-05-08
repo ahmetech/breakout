@@ -407,7 +407,6 @@ class PyBreakout(Describer):
         #pygame.event.set_grab(True)
         
         while True:
-            self.cventry.run()
             
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: exit()
@@ -415,6 +414,20 @@ class PyBreakout(Describer):
             keys = pygame.key.get_pressed()
             if keys[K_q]:
                exit(0)
+            elif keys[K_RETURN]:
+                if (len(self.balls) <= 0) or (len(self.balls) == 1 and not self.balls[0].stuck):
+                    if self.numLives >=1:
+                        self.numLives -=1
+                        self.reset()
+                        print "self.numLives = %s"%self.numLives
+                    else:
+                        self.running = False
+                        self.endgame()
+            elif keys[K_y]:
+                if self.gameOver:
+                    #print "K_y pressed launch brand new game"
+                    self.startGame()
+
             #mouse_x, mouse_y = pygame.mouse.get_pos()
             #button1,button2,button3 = pygame.mouse.get_pressed()
             
@@ -444,24 +457,12 @@ class PyBreakout(Describer):
             #   if self.balls[0].stuck:
             #        self.balls[0].stuck = False
             #    self.paddle.rotate(1)
-            #if keys[K_RETURN] or button2 or button3:
-            #    if (len(self.balls) <= 0) or (len(self.balls) == 1 and not self.balls[0].stuck):
-            #        if self.numLives >=1:
-            #            self.numLives -=1
-            #            self.reset()
-                        #print "self.numLives = %s"%self.numLives
-            #        else:
-            #            self.running = False
-            #            self.endgame()
-            #elif keys[K_y]:
-            #    if self.gameOver:
-                    #print "K_y pressed launch brand new game"
-            #        self.startGame()
             #elif keys[K_ESCAPE]:
                 #print "K_ESCAPE pressed launch brand new game"
             #    exit()
         
             if self.running:
+                self.cventry.run()
                 self.checkBonusCollision()
                 
                 for ball in self.balls[:]:
