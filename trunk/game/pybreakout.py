@@ -38,7 +38,7 @@ class Ball(Describer):
         self.speed = 3
         self._angle = 45
 
-        self.stuck = True
+        self.stuck = False
         self.resetState()
 
     @property
@@ -412,9 +412,9 @@ class PyBreakout(Describer):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: exit()
                 
-            keys = pygame.key.get_pressed()
-            mouse_x, mouse_y = pygame.mouse.get_pos()
-            button1,button2,button3 = pygame.mouse.get_pressed()
+            #keys = pygame.key.get_pressed()
+            #mouse_x, mouse_y = pygame.mouse.get_pos()
+            #button1,button2,button3 = pygame.mouse.get_pressed()
             
             #print "mouse_x = %s"%mouse_x
             #mousePosxEqual = True
@@ -438,26 +438,26 @@ class PyBreakout(Describer):
             #        else:
             #           mousePosyEqual = False
 
-            if keys[K_SPACE] or button1:
-                if self.balls[0].stuck:
-                    self.balls[0].stuck = False
-                self.paddle.rotate(1)
-            elif keys[K_RETURN] or button2 or button3:
-                if (len(self.balls) <= 0) or (len(self.balls) == 1 and not self.balls[0].stuck):
-                    if self.numLives >=1:
-                        self.numLives -=1
-                        self.reset()
+            #if keys[K_SPACE] or button1:
+            #   if self.balls[0].stuck:
+            #        self.balls[0].stuck = False
+            #    self.paddle.rotate(1)
+            #if keys[K_RETURN] or button2 or button3:
+            #    if (len(self.balls) <= 0) or (len(self.balls) == 1 and not self.balls[0].stuck):
+            #        if self.numLives >=1:
+            #            self.numLives -=1
+            #            self.reset()
                         #print "self.numLives = %s"%self.numLives
-                    else:
-                        self.running = False
-                        self.endgame()
-            elif keys[K_y]:
-                if self.gameOver:
+            #        else:
+            #            self.running = False
+            #            self.endgame()
+            #elif keys[K_y]:
+            #    if self.gameOver:
                     #print "K_y pressed launch brand new game"
-                    self.startGame()
-            elif keys[K_ESCAPE]:
+            #        self.startGame()
+            #elif keys[K_ESCAPE]:
                 #print "K_ESCAPE pressed launch brand new game"
-                exit()
+            #    exit()
         
             if self.running:
                 self.checkBonusCollision()
