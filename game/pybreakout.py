@@ -381,6 +381,14 @@ class PyBreakout(Describer):
 
     def onMove(self, dx, dy):
         print "(x,y): ",dx, dy
+        if dx > 0:
+           self.paddle.moveRight(dx)
+        else:
+           self.paddle.moveLeft(abs(dx))
+        if dy > 0:
+           self.paddle.moveDown(dy)
+        else:
+           self.paddle.moveUp(abs(dy))
 
     def onSetAngle(self, angle):
         print "angle: ", angle
@@ -404,26 +412,26 @@ class PyBreakout(Describer):
             button1,button2,button3 = pygame.mouse.get_pressed()
             
             #print "mouse_x = %s"%mouse_x
-            mousePosxEqual = True
-            while mousePosxEqual:
-                mousePosxEqual = mouse_x != self.paddle.rect.left
-                if mouse_x < self.paddle.rect.left:
-                    self.paddle.moveLeft(1)
-                elif mouse_x > self.paddle.rect.left:
-                    if self.paddle.rect.right < self.width:
-                        self.paddle.moveRight(1)
-                    else:
-                        mousePosxEqual = False
-            mousePosyEqual = True
-            while mousePosyEqual:
-                mousePosyEqual = mouse_y != self.paddle.rect.top
-                if mouse_y < self.paddle.rect.top:
-                    self.paddle.moveUp(1)
-                elif mouse_y > self.paddle.rect.top:
-                    if self.paddle.rect.top < self.height:
-                        self.paddle.moveDown(1)
-                    else:
-                        mousePosyEqual = False
+            #mousePosxEqual = True
+            #while mousePosxEqual:
+            #    mousePosxEqual = mouse_x != self.paddle.rect.left
+            #    if mouse_x < self.paddle.rect.left:
+            #        self.paddle.moveLeft(1)
+            #    elif mouse_x > self.paddle.rect.left:
+            #        if self.paddle.rect.right < self.width:
+            #            self.paddle.moveRight(1)
+            #        else:
+            #            mousePosxEqual = False
+            #mousePosyEqual = True
+            #while mousePosyEqual:
+            #    mousePosyEqual = mouse_y != self.paddle.rect.top
+            #  if mouse_y < self.paddle.rect.top:
+            #        self.paddle.moveUp(1)
+            #    elif mouse_y > self.paddle.rect.top:
+            #        if self.paddle.rect.top < self.height:
+            #            self.paddle.moveDown(1)
+            #        else:
+            #           mousePosyEqual = False
 
             if keys[K_SPACE] or button1:
                 if self.balls[0].stuck:
