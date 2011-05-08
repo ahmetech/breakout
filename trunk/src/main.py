@@ -43,7 +43,7 @@ class ImageProcessSession(object):
     self.min_degree_change = 0.02
     self.max_pos_change = 50
     self.min_pos_change = 5
-    self.history_size = 10
+    self.history_size = 5
     self.win_w = 0
     self.win_h = 0
     for i in range(self.history_size):
