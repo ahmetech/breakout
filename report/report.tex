@@ -1,0 +1,90 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage{cvpr}
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+
+% Include other packages here, before hyperref.
+
+% If you comment hyperref and then uncomment it, you should delete
+% egpaper.aux before re-running latex.  (Or just hit 'q' on the first latex
+% run, let it finish, and you should be clear).
+%\usepackage[pagebackref=true,breaklinks=true,letterpaper=true,colorlinks,bookmarks=false]{hyperref}
+
+\cvprfinalcopy % *** Uncomment this line for the final submission
+
+\def\cvprPaperID{****} % *** Enter the CVPR Paper ID here
+\def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
+
+% Pages are numbered in submission mode, and unnumbered in camera-ready
+\ifcvprfinal\pagestyle{empty}\fi
+\begin{document}
+
+%%%%%%%%% TITLE
+\title{W4735 Visual Interfaces to Computers\\Final Project Report}
+\author{Jie Huang and Shao-Chuan Wang\\
+Department of Computer Science\\
+Columbia University\\
+{\tt\small \{jh3105, sw2644\}@columbia.edu}
+% For a paper whose authors are all at the same institution,
+% omit the following lines up until the closing ``}''.
+% Additional authors and addresses can be added with ``\and'',
+% just like the second author.
+% To save space, use either the email address or home page, not both
+}
+
+\maketitle
+\thispagestyle{empty}
+
+%%%%%%%%% ABSTRACT
+\begin{abstract}
+\end{abstract}
+
+%%%%%%%%% BODY TEXT
+
+\section{Introduction}
+
+Visual interfaces in the applications of human-computer interface 
+have been progressed tremendously in recent years. In particular, an outside-out 
+visual system \cite{outout} which does not require players to wear 
+any extra devices provides flexibilities in gaming applications, if 
+the motion of the body can be accurately captured.
+As we can see from the recent example, Microsoft Kinect, is the 
+first vision-based commercial game platform, and it does 
+create a lot of new paradigms for playing video games with human bodies. 
+
+However, the idea of using gesture or human body as game
+controllers appeared in 1990s. For example, 
+Freeman et al. \cite{cvicg, cvfcg} implemented a computer vision based 
+computer game system, based on image moments and orientation histograms, and 
+use the chips to provide real-time interactive responses to the players. 
+
+More recently, H\"{a}m\"{a}l\"{a}inen \cite{childgame} designed a perceptual user interface for
+controlling a flying cartoon-animated dragon in a
+physically and vocally interactive computer game for 4 to 9 years old children.
+Lu et al. \cite{racecar} proposed a vision-based 3D racing car game controlling
+method by analyzing the distance of two fists positions of the player
+from the camera to control the direction of the racing car. Similarly, 
+Schlattmann \cite{3dgames} et al. demonstrated three 3D real-time games via bare-handed 
+interactions. All studies show higher usability via vision-based gesture controls 
+in their usability tests.
+
+
+In this proposal, we propose to to build a gesture-based game controller, which 
+requires the modern computer vision technology. For a detailed review on visual 
+interface of hand gestures and human motion capture, please see 
+the review articles \cite{pamireview, cviureview}.
+
+
+\section{Conclusion and future direction}
+
+{\small
+\bibliographystyle{ieee}
+\bibliography{egbib}
+}
+
+\end{document}
