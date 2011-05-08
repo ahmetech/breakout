@@ -40,10 +40,18 @@ class ImageProcessSession(object):
     self.history = []
     self.buf = []
     self.max_degree_change = 0.2
-    self.max_pos_change = 80
-    self.history_size = 5
+    self.min_degree_change = 0.02
+    self.max_pos_change = 50
+    self.min_pos_change = 5
+    self.history_size = 10
+    self.win_w = 0
+    self.win_h = 0
     for i in range(self.history_size):
         self.history.append( ((-1, -1), 0.0) )
+
+  def set_size(self, img):
+      self.win_w = img.width
+      self.win_h = img.height
 
   def get_motion_mask(self, img):
       return self.motion_detector.get_motion_mask(img)
@@ -111,11 +119,30 @@ class ImageProcessSession(object):
       last = self.history[-2]
       right = current[0][0] - last[0][0]
       down = current[0][1] - last[0][1]
+      d = math.sqrt(right*right + down*down)
       theta = current[1]
       print right, down, theta
-      self.entry.move(right, down)
+      if d > self.min_pos_change:
+          self.entry.move(right*2, down*2)
+      else:
+          print "ignore small movement"
+          #self.__check_on_edge(current)
       self.entry.setAngle(theta/math.pi*180)
-
+  
+  def __check_on_edge(self, p):
+      right = 0
+      down = 0
+      print self.win_w, self.win_h
+      if p[0] < 10:
+          right = -10
+      if p[0] > self.win_w - 10:
+          right = 10
+      if p[1] < 10:
+          down = -10
+      if p[1] > self.win_h - 10:
+          down = 10
+      if right != 0 or down != 0:
+          self.entry.move(right, down)
 
   def __check_buffer_stable(self):
       stable = True
@@ -174,6 +201,9 @@ class Entry(object):
                     255,
                     skin_detector.setIntensityThresholdHigh)
      self.session = ImageProcessSession(skin_detector, motion_util, self)
+     img = cv.QueryFrame(self.cam)
+     img = im.resize(img, width=400)
+     self.session.set_size(img)
 
   def run(self):
     k = cv.WaitKey(self.msdelay)
