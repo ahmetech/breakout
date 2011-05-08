@@ -491,7 +491,6 @@ class PyBreakout(Describer):
                 
                 #All balls have left the gameboard, need to pause and wait for Right Click
                 # or if numLives == 0, then end game.
-                print "len: ", len(self.balls)
                 if len(self.balls) == 0:
                     self.running = False
                     self.pointsColor = RGB_RED
