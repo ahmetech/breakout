@@ -412,7 +412,9 @@ class PyBreakout(Describer):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT: exit()
                 
-            #keys = pygame.key.get_pressed()
+            keys = pygame.key.get_pressed()
+            if keys[K_q]:
+               exit(0)
             #mouse_x, mouse_y = pygame.mouse.get_pos()
             #button1,button2,button3 = pygame.mouse.get_pressed()
             
