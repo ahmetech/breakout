@@ -136,14 +136,11 @@ class Entry(object):
   # Setting up the window objects and environment
   debug = 1 
   proc_win_name = "Processing window"
-  cam_win_name = "Capture from camera"
   msdelay = 3
 
   def initWindows(self):
      cv.SetMouseCallback(self.proc_win_name, handle_mouse)
-     cv.SetMouseCallback(self.cam_win_name, handle_mouse)
      proc_win = cv.NamedWindow(self.proc_win_name, 1)
-     cam_win = cv.NamedWindow(self.cam_win_name, 1)
 
   def setCallbacks(self, moveCallback, setAngleCallback):
      self.move = moveCallback
@@ -196,7 +193,8 @@ class Entry(object):
         max_contours = im.top_two_max_contours(contours)
 
     if max_contours:
-        img = cv.CreateImage((bgrimg.width, bgrimg.height), 8, 3)
+        img = bgrimg
+        #cv.Clone(bgrimg)
         cts = []
         for ct in max_contours:
             if ct[1]: cts.append(ct[1])
