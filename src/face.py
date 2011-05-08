@@ -7,8 +7,19 @@
 
 import cv
 import im
+import os
 
-cascade = cv.Load('haarcascade_frontalface_alt.xml')
+FACE_TRAIN_XML = 'haarcascade_frontalface_alt.xml'
+
+if os.path.exists(FACE_TRAIN_XML):
+    cascade = cv.Load(FACE_TRAIN_XML)
+elif os.path.exists(os.path.join(__name__, FACE_TRAIN_XML)):
+    cascade = cv.Load(os.path.join(__name__, FACE_TRAIN_XML))
+elif os.path.exists(os.path.join('src', FACE_TRAIN_XML)):
+    cascade = cv.Load(os.path.join('src', FACE_TRAIN_XML))
+else:
+    raise IOException("face training data not found.")
+
 def detect_faces(bgrimg):
     grayscale = im.bgr2gray(bgrimg)
     # create storage
