@@ -13,6 +13,7 @@ import skin, gesture
 import motion2
 import math
 import traceback
+import util
 from constants import SDC
 
 
@@ -87,10 +88,15 @@ class ImageProcessSession(object):
           p2[1])*(p1[1] - p2[1]))
       print pos_change, degree_change
       if pos_change > self.max_pos_change or degree_change >\
-          self.max_degree_chagne: 
+          self.max_degree_change: 
               self.buf.append(polar)
               if len(self.buf) > 5: self.buf.pop(0)
               print "put to buf"
+              if self.__check_buffer_stable():
+                  print "ss"
+                  self.history = self.buf
+                  self.buf = []
+              else: print "not ssssssssssssssssss"
 
       else:
           self.history.append(polar)
@@ -99,13 +105,18 @@ class ImageProcessSession(object):
           print "put into history"
 
   def __check_buffer_stable(self):
-      sable = true
-      if len(self.buf < 5): return false
+      stable = True
+      if len(self.buf) < 5: return False
       for i in range(4):
           p1 = self.buf[i][0]
           p2 = self.buf[i+1][0]
           d1 = self.buf[i][1]
           d2 = self.buf[i+1][1]
+          delta_p = util.get_point_distance(p1, p2)
+          delta_d = abs(d1 - d2)
+          if delta_p > self.max_pos_change or delta_d > self.max_degree_change:
+              stable = False
+      return True
 
 
 class Entry(object):
@@ -186,5 +197,5 @@ if __name__=='__main__':
     try:
         mainLoop()
     except Exception, e:
-        traceback.print_stack()
         print "Unkown error: ", e 
+        raise
