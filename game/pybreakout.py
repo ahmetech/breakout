@@ -186,7 +186,7 @@ class Paddle(Describer):
 
     def moveDown(self, pixelsDown):
         self.y += pixelsDown
-        self.y = min(self.y, self.maxsize[1])
+        self.y = min(self.y+self.h, self.maxsize[1]) - self.h
         if self.ball.stuck:
             self.ball.moveDown(pixelsDown)
 
@@ -389,7 +389,7 @@ class PyBreakout(Describer):
         self.gameOver = False
 
     def onMove(self, dx, dy):
-        print "(x,y): ",dx, dy
+        #print "(x,y): ",dx, dy
         if dx > 0:
            self.paddle.moveRight(dx)
         else:
@@ -400,16 +400,13 @@ class PyBreakout(Describer):
            self.paddle.moveUp(abs(dy))
 
     def onSetAngle(self, angle):
-        print "angle: ", angle
+        #print "angle: ", angle
         self.paddle.setAngle(angle)
         
     def play(self):
         "The main game loop occurs here, checks for keyboard input, updates game state, etc..."
         self.running = True
         lastLevelUpTime = time.time()
-        #Excellent suggestions from Peter Nosgoth to have tighter control over Mouse
-        #pygame.mouse.set_visible(False)
-        #pygame.event.set_grab(True)
         i = 0
         while True:
             for event in pygame.event.get():
@@ -429,41 +426,7 @@ class PyBreakout(Describer):
                         self.endgame()
             elif keys[K_y]:
                 if self.gameOver:
-                    #print "K_y pressed launch brand new game"
                     self.startGame()
-
-            #mouse_x, mouse_y = pygame.mouse.get_pos()
-            #button1,button2,button3 = pygame.mouse.get_pressed()
-            
-            #print "mouse_x = %s"%mouse_x
-            #mousePosxEqual = True
-            #while mousePosxEqual:
-            #    mousePosxEqual = mouse_x != self.paddle.rect.left
-            #    if mouse_x < self.paddle.rect.left:
-            #        self.paddle.moveLeft(1)
-            #    elif mouse_x > self.paddle.rect.left:
-            #        if self.paddle.rect.right < self.width:
-            #            self.paddle.moveRight(1)
-            #        else:
-            #            mousePosxEqual = False
-            #mousePosyEqual = True
-            #while mousePosyEqual:
-            #    mousePosyEqual = mouse_y != self.paddle.rect.top
-            #  if mouse_y < self.paddle.rect.top:
-            #        self.paddle.moveUp(1)
-            #    elif mouse_y > self.paddle.rect.top:
-            #        if self.paddle.rect.top < self.height:
-            #            self.paddle.moveDown(1)
-            #        else:
-            #           mousePosyEqual = False
-
-            #if keys[K_SPACE] or button1:
-            #   if self.balls[0].stuck:
-            #        self.balls[0].stuck = False
-            #    self.paddle.rotate(1)
-            #elif keys[K_ESCAPE]:
-                #print "K_ESCAPE pressed launch brand new game"
-            #    exit()
         
             if self.running:
                 if (i % 4 == 0):
@@ -476,7 +439,6 @@ class PyBreakout(Describer):
                     hitWall = ball.autoMove()
                     if hitWall:
                         self.soundManager.play('cartoon-spring-sound',[0.2,0.2])
-                        print ball.angle
                     if(ball.rect.top >= GB_HEIGHT):
                         self.balls.remove(ball)
                 
@@ -533,9 +495,7 @@ class PyBreakout(Describer):
             theta = currentBall.angle
             phi = self.paddle.angle
             
-            print "2phi:",2*phi, "theta:",theta
             currentBall.angle = 2 * phi - theta
-            print currentBall.angle
             #paddle and ball collided, play appropriate sound
             
             self.soundManager.play('cartoon-blurp-sound',[0.3,0.3])
