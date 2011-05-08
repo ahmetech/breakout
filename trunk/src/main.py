@@ -118,6 +118,11 @@ class ImageProcessSession(object):
               stable = False
       return stable
 
+def onMove(x, y):
+  print '(x,y):', x,y
+
+def onSetAngle(angle):
+  print 'angle: ', angle
 
 class Entry(object):
   # Setting up the window objects and environment
@@ -137,8 +142,8 @@ class Entry(object):
      self.setAngle = setAngleCallback
 
   def __init__(self):
-     self.move = None
-     self.setAngle = None
+     self.move = onMove
+     self.setAngle = onSetAngle
      self.initWindows()
      self.cam = cv.CaptureFromCAM(0)
      skin_detector = skin.SkinDetector()
