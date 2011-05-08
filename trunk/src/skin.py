@@ -57,7 +57,7 @@ class SkinDetector(object):
     img_temp = cv.CreateImage(im.size(bgrimg), 8, 3)
     cv.Smooth(bgrimg, img_temp, cv.CV_GAUSSIAN, 5, 5)
     for i in range(3): cv.Smooth(img_temp, img_temp, cv.CV_GAUSSIAN, 5, 5)
-    cv.ShowImage("Capture from camera", img_temp)
+    #cv.ShowImage("Capture from camera", img_temp)
 
     skin = self._detectSkin(img_temp)
     return skin
@@ -71,7 +71,7 @@ class SkinDetector(object):
     low = (self.h_low, self.v_low, 0)
     high = (self.h_high, self.v_high, 256)
     cv.InRangeS(hsvimg, low, high, skin_mask) 
-    cv.ShowImage("inrange", skin_mask)
+    #cv.ShowImage("inrange", skin_mask)
      
     face_mask = face.blockfacemask(bgrimg)
     cv.And(skin_mask,  face_mask, skin_mask)
