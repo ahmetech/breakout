@@ -93,36 +93,35 @@ class ImageProcessSession(object):
       if pos_change > self.max_pos_change or degree_change >\
           self.max_degree_change: 
               self.buf.append(polar)
-              if len(self.buf) > 5: self.buf.pop(0)
+              if len(self.buf) > len(self.history): self.buf.pop(0)
               print "put to buf"
               if self.__check_buffer_stable():
-                  print "ss"
+                  print "buf is determined to be stabe, replace history with buf"
                   self.history = self.buf
                   self.buf = []
               else:
-                  print "not ssssssssssssssssss"
+                  print "buf is not stable, this move is abandoned."
                   return
 
       else:
           self.history.append(polar)
           self.history.pop(0)
           self.buf = []
-          print "put into history"
 
       current = self.history[-1]
       last = self.history[-2]
       right = current[0][0] - last[0][0]
       down = current[0][1] - last[0][1]
       theta = current[1]
+      print right, down, theta
       self.entry.move(right, down)
       self.entry.setAngle(theta/math.pi*180)
 
 
-
   def __check_buffer_stable(self):
       stable = True
-      if len(self.buf) < 5: return False
-      for i in range(4):
+      if len(self.buf) < len(self.history): return False
+      for i in range(len(history) - 1):
           p1 = self.buf[i][0]
           p2 = self.buf[i+1][0]
           d1 = self.buf[i][1]
