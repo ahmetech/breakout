@@ -42,6 +42,14 @@ Columbia University\\
 
 %%%%%%%%% ABSTRACT
 \begin{abstract}
+In this report, we are going to introduce a system that exploits two bare hands image 
+as visual input to control a real-time game. We firstly perform skin segmentation using hue-saturation 
+thresholding on colored images. Since faces are also in skin color, we 
+use face detection to prune the faces. After obtaining the contours of two 
+bare hands, we find the finger tips of hands by finding the top of the contour.
+We use a line between two finger tips to control the game; the position of the line 
+and its orientation have a mapping to the controlled object. The tools we used are python wrapper 
+of OpenCV 2.1 library, and pygame for game development.
 \end{abstract}
 
 %%%%%%%%% BODY TEXT
@@ -79,6 +87,38 @@ requires the modern computer vision technology. For a detailed review on visual
 interface of hand gestures and human motion capture, please see 
 the review articles \cite{pamireview, cviureview}.
 
+\section{Design decisions}
+\subsection{Hardware}
+Table~\ref{tab:hw} explains the comparison between different hardware devices.
+Our team considered to use Kinect to implement the system; however, 
+we choose to use normal laptop web camera due to its availability as well as its 
+low cost. 
+Our webcams have frame rates ranging from 15fps to 30fps, which is adequate for real-time 
+game control. Also, we need a colored camera in order to detect the skin color.
+
+\begin{table}[h]
+\begin{tabular}{c|ccc}
+&High-end\\
+&Camera&Web Camera&Kinect \\
+\hline
+Frame rates & fast & adequate & adequate \\
+Availability & medium & high & low \\
+Skin detection & not very easy & not very easy & very easy \\
+Noises & low & high & medium \\
+Cost & high & low & high 
+\end{tabular}
+\caption{The comparison between different capturing devices.}
+\label{tab:hw}
+\end{table}
+
+\subsection{Software}
+
+\section{Gesture controller}
+In this report
+\subsection{Skin detection}
+\subsection{Contour finding}
+\subsection{Face pruning}
+\subsection{}
 
 \section{Conclusion and future direction}
 
