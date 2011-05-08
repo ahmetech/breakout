@@ -186,17 +186,17 @@ class Entry(object):
     bgrimg = cv.QueryFrame(self.cam)
     if not bgrimg:
         return False
+    bgrimg = im.resize(bgrimg, width=400)
     cv.Flip(bgrimg, None, 1)
 
     contours = self.session.process(bgrimg)
-
-    img = cv.CreateImage((bgrimg.width, bgrimg.height), 8, 3)
 
     max_contours = None
     if contours:
         max_contours = im.top_two_max_contours(contours)
 
     if max_contours:
+        img = cv.CreateImage((bgrimg.width, bgrimg.height), 8, 3)
         cts = []
         for ct in max_contours:
             if ct[1]: cts.append(ct[1])
