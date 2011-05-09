@@ -123,7 +123,7 @@ class ImageProcessSession(object):
       theta = current[1]
       print right, down, theta
       if d > self.min_pos_change:
-          self.entry.move(right*2, down*2)
+          self.entry.move(right*1.5, down*1.5)
       else:
           print "ignore small movement"
           #self.__check_on_edge(current)
