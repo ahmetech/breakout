@@ -25,7 +25,7 @@
 \begin{document}
 
 %%%%%%%%% TITLE
-\title{W4735 Visual Interfaces to Computers\\Final Project Report}
+\title{W4735 Visual Interfaces to Computers\\Final Project Report: Real-time Gesture-based Game Control}
 \author{Jie Huang and Shao-Chuan Wang\\
 Department of Computer Science\\
 Columbia University\\
@@ -89,9 +89,9 @@ the review articles \cite{pamireview, cviureview}.
 
 \section{Design decisions}
 \subsection{Hardware}
-Table~\ref{tab:hw} explains the comparison between different hardware devices.
+Table~\ref{tab:hw} compares different hardware devices.
 Our team considered to use Kinect to implement the system; however, 
-we choose to use normal laptop web camera due to its availability as well as its 
+we chose to use normal laptop web camera due to its availability as well as its 
 low cost. 
 Our webcams have frame rates ranging from 15fps to 30fps, which is adequate for real-time 
 game control. Also, we need a colored camera in order to detect the skin color.
@@ -102,6 +102,7 @@ game control. Also, we need a colored camera in order to detect the skin color.
 &Camera&Web Camera&Kinect \\
 \hline
 Frame rates & fast & adequate & adequate \\
+Resolution & HD 1080 & VGA & VGA \\
 Availability & medium & high & low \\
 Skin detection & not very easy & not very easy & very easy \\
 Noises & low & high & medium \\
@@ -112,16 +113,79 @@ Cost & high & low & high
 \end{table}
 
 \subsection{Software}
+We used python as our development programming language due to 
+its dynamic and high-level properties. We use python for rapid 
+development. Python has OpenCV wrapper, and hence we can tune 
+the parameters quickly without recompiling the whole system. 
+Python has a game development package called pygame, which 
+has event handling, sound handling, and screen drawing for making 
+games. To fulfill the needs to gesture-controlled game development, 
+we find python has good library supports and easy for development.
+
+In this project, we are focusing on the visual interface 
+design. Hence, we do not intend to build a game from the scratch. 
+Instead, we chose to modify an exisiting game which is open sourced. 
+The original version of pybreakout can be downloaded at
+\verb"http://code.google.com/p/pybreakout/"
+
+\subsection{Game}
+We choose an ancient Nintendo game \emph{Breakout} and modify 
+the control of the paddle. Traditionally, the paddle can 
+move only horizontally along a predetermined line at a constant speed.
+In our design, we choose to enable the paddle to move upward and rotate.
+The reason why the traditional design may be the reason that 
+it is not intuitive to rotate the paddle with gamestick.
+\begin{figure}[h]
+\centering
+\begin{tabular}{cc}
+\includegraphics[height=3.5cm]{game0060.png} &
+\includegraphics[height=3.5cm]{gesture0060.png} \\
+(a) Game play screen &
+(b) Control screen
+\end{tabular}
+\caption{A screenshot of playing \emph{breakout}}
+\label{fig:gamescreen}
+\end{figure}
+
+However, if we control the orientation and position of the paddle 
+using the gesture shown in Figure~\ref{fig:gamescreen} (b), 
+we can control the paddle according to our gesture commands.
+
+Figure~\ref{fig:gamescreen} (b) shows our design of control. 
+We use tips of two bare hands as references, and the orientation and 
+the position of the paddle is controoled by the blue line in 
+Figure~\ref{fig:gamescreen} (b).
+
+We can also easily extend this controlling interface to other 
+games such as car driving games due to the fact that in most 
+car driving games, we only need to control the wheel by 
+orientation. It would be also very intuitive to control 
+the virtual car using two bare hands, as shown in Figure~\ref{fig:cargame}.
+\begin{figure}[h]
+\centering
+\begin{tabular}{cc}
+\includegraphics[height=3cm]{cargame.png} &
+\includegraphics[height=3cm]{gesture0047.png} \\
+(a) A car game screen &
+(b) Control screen
+\end{tabular}
+\caption{A concept screenshot of playing a car game.}
+\label{fig:cargame}
+\end{figure}
 
 \section{Gesture controller}
-In this report
+\subsection{System overview}
+(block diagrams) and how visual interface invoke the movement.
+
 \subsection{Skin detection}
 
 \subsection{Motion detection}
 
 \subsection{Contour finding}
+\label{sec:contour}
 
 \subsection{Face pruning}
+\label{sec:face}
 
 \subsection{Controller algorithms}
 
@@ -135,6 +199,36 @@ In this report
 % resize
 % cache (e.g. face training data)
 % game tick vs control tick
+A game control interface has to be real-time. In other words, 
+the gesture decision has to be made in a very short period of time. 
+We faced efficiency issues as we integrate the visual interface and 
+the game. We found several ways to optimize the systems without 
+sacrifacing the control accuracy.
+
+\paragraph{Resize visual input.} The resolution of 
+original visual input image is $640 \times 480$. 
+We resize it to $400 \times 300$, and the speed boosted.
+We do not need high-resoluted image because we detected 
+blobs and contours which do not highly depend on image resolution. 
+(the details of detecting the hands are depicted in Section 
+\ref{sec:contour}.
+
+\paragraph{Cache.} We do not calculat everything on the fly. 
+If something can be done offline, we will precompute it and 
+load it as the system starts. For example, in Section 
+\ref{sec:face} we filtered out faces by face detection. 
+The training face data are loaded only once at the beginning. 
+In this way, we reduced the I/O overheads. We also did the 
+similar cache for other resources.
+
+\paragraph{Drop frames.} The computation of visual input 
+and processing is heavier than the game; To smoothen the game 
+play, we drop frames of visual input. We do not ask 
+the visual interface to invoke the movement events. 
+Hence, we sacrifaced the response time of the visual control 
+without sacrifacing the frame rates of the game. In our 
+current implementation, the ratio of the frame rates between 
+visual control and game is $1/4$.
 
 \section{System limitation}
 
