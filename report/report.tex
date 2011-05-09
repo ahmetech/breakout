@@ -43,18 +43,23 @@ Columbia University\\
 %%%%%%%%% ABSTRACT
 \begin{abstract}
 In this report, we are going to introduce a system that exploits two bare hands image 
-as visual input to control a real-time game. We firstly perform skin segmentation using hue-saturation 
-thresholding on colored images. Since faces are also in skin color, we 
-use face detection to prune the faces. After obtaining the contours of two 
-bare hands, we find the finger tips of hands by finding the top of the contour.
-We use a line between two finger tips to control the game; the position of the line 
-and its orientation have a mapping to the controlled object. The tools we used are python wrapper 
-of OpenCV 2.1 library, and pygame for game development.
+as visual input to control a real-time game. To find the user's hands in the captured colored image, 
+we perform skin segmentation using hue-saturation 
+thresholding on HSV color space. Since faces are also in skin color, we 
+use face detection to prune the faces. 
+We proposed an algorithm to find the fingertips as well as 
+a control algorithm by analyzing the position and the orientation of a 
+line between two fingertips; the position and the orientation of the line 
+have a mapping to the controlled object on the screen. 
+The development tools we used are python wrapper 
+of OpenCV 2.1 library, and pygame for game development. Our codes 
+can be downloaded from \verb"http://code.google.com/p/breakout/"
 \end{abstract}
 
 %%%%%%%%% BODY TEXT
 
 \section{Introduction}
+\label{sec:intro}
 
 Visual interfaces in the applications of human-computer interface 
 have been progressed tremendously in recent years. In particular, an outside-out 
@@ -81,22 +86,19 @@ Schlattmann \cite{3dgames} et al. demonstrated three 3D real-time games via bare
 interactions. All studies show higher usability via vision-based gesture controls 
 in their usability tests.
 
+Our work is motivated by Lu \cite{racecar} and 
+Schlattmann \cite{3dgames}. We found that using bare-hands is particularly 
+adaptable to the game control, especially for some category of games such as 
+car driving. 
 
-In this proposal, we propose to to build a gesture-based game controller, which 
+In this proposal, we propose to build a gesture-based game controller, which 
 requires the modern computer vision technology. For a detailed review on visual 
 interface of hand gestures and human motion capture, please see 
 the review articles \cite{pamireview, cviureview}.
 
 \section{Design decisions}
 \subsection{Hardware}
-Table~\ref{tab:hw} compares different hardware devices.
-Our team considered to use Kinect to implement the system; however, 
-we chose to use normal laptop web camera due to its availability as well as its 
-low cost. 
-Our webcams have frame rates ranging from 15fps to 30fps, which is adequate for real-time 
-game control. Also, we need a colored camera in order to detect the skin color.
-
-\begin{table}[h]
+\begin{table}[b!]
 \begin{tabular}{c|ccc}
 &High-end\\
 &Camera&Web Camera&Kinect \\
@@ -111,16 +113,33 @@ Cost & high & low & high
 \caption{The comparison between different capturing devices.}
 \label{tab:hw}
 \end{table}
+Table~\ref{tab:hw} compares different hardware devices.
+Our team considered to use Kinect to implement the system; however, 
+we chose to use normal laptop web camera due to its availability as well as its 
+low cost. 
+Our webcams have frame rates ranging from 15fps to 30fps, which is adequate for real-time 
+game control. Also, we need a colored camera in order to detect the skin color.
+
+
+Since we chose low-end cameras as our capturing devices, we cannot design too 
+complicated gesture grammar with small or fast movement. Fortunately, this 
+constraint will not be a big problem for game control. We do not need complex 
+commands in the game. As we will see in the later sections, we chose to find the 
+blobs or convex hulls of user's hands, which does not require high-end cameras. 
 
 \subsection{Software}
-We used python as our development programming language due to 
-its dynamic and high-level properties. We use python for rapid 
-development. Python has OpenCV wrapper, and hence we can tune 
+We used python as our developing programming language due to 
+its dynamic and high-level properties. As introduced in the end 
+of Section \ref{sec:intro}, we need modern computer vision 
+techniques to \emph{recognize} the gesture commands. 
+Python has OpenCV wrapper, we can try many existing computer vision 
+algorithms without too much efforts. In addition, python 
+is an interpreter and hence we can tune 
 the parameters quickly without recompiling the whole system. 
 Python has a game development package called pygame, which 
-has event handling, sound handling, and screen drawing for making 
+has event handling, sound handling, and screen drawing for producing 
 games. To fulfill the needs to gesture-controlled game development, 
-we find python has good library supports and easy for development.
+we find python has good library supports and is easy for rapid development.
 
 As a brief summary, we chose python as our developing programming 
 language due to the following reasons:
@@ -138,11 +157,12 @@ The original version of pybreakout can be downloaded at
 \verb"http://code.google.com/p/pybreakout/"
 
 \subsection{Game: breakout}
-We choose an ancient Nintendo game \emph{Breakout} and modify 
-the control of the paddle. Traditionally, the paddle can 
+We chose an ancient Nintendo game \emph{Breakout} and modified 
+the way we control the paddle. Traditionally, the paddle can 
 move only horizontally along a predetermined line at a constant speed.
-In our design, we choose to enable the paddle to move upward and rotate.
-The reason why the traditional design may be the reason that 
+In our design, we chose to enable the paddle to move upward and rotate.
+We guess the reason why the traditional design did not incorporate 
+rotation is that 
 it is not intuitive to rotate the paddle with gamestick.
 \begin{figure}[h]
 \centering
@@ -161,9 +181,10 @@ using the gesture shown in Figure~\ref{fig:gamescreen} (b),
 we can control the paddle according to our gesture commands.
 
 Figure~\ref{fig:gamescreen} (b) shows our design of control. 
-We use tips of two bare hands as references, and the orientation and 
-the position of the paddle is controoled by the blue line in 
-Figure~\ref{fig:gamescreen} (b).
+We used tips of two bare hands as references, and the orientation and 
+the position of the paddle is controlled by the blue line in 
+Figure~\ref{fig:gamescreen} (b). We can see that in Figure~\ref{fig:gamescreen} 
+(a) and (b), the paddle and the blue line has the same orientation.
 
 We can also easily extend this controlling interface to other 
 games such as car driving games due to the fact that in most 
@@ -218,16 +239,16 @@ More details on skin detection will be explored in Section \ref{sec:gesture}.
 
 \section{Gesture controller}
 \label{sec:gesture}
-We used a mixed method to implement the gesture controller.
+We have several submodules to implement the gesture controller.
 
 \subsection{Skin detection}
 \label{sec:skin}
 \paragraph{Step 1: Gaussian blur}
-Blurring helps make the skin color smoother such that we can get more complete contours. 
-We started with a median filter using a 17*17 aperture based on our homework 1 experience. 
-We then realized 17*17 aperture is to slow for the real-time controller. Thereby, we 
-changed to a Gaussian filter with 5*5 Gaussian kernel. And we ran the filter for 4 times 
-to achieve the similar result as a 17*17 median filter. It turns out even running 4 times 
+Blurring makes the input image smoother such that we can get more complete contours. 
+We started with a median filter using a $17 \times 17$ aperture based on our homework 1 experience. 
+We then realized $17 \times 17$ aperture is too slow for the real-time controller. Therefore, we 
+changed to a Gaussian filter with $5 \times 5$ Gaussian kernel. And we ran the filter for 4 times 
+to achieve the similar result as a $17 \times 17$ median filter. It turns out even running 4 times 
 is much faster than running a median filter with large aperture.
 
 Sample OpenCV code:
@@ -253,7 +274,7 @@ settings.
 We found that using saturation (S) channel is more suitable for this purpose 
 than V channel since saturation is more stable in different settings than intensity. 
 Though it still has much dependency on the environment, we do not need the help of 
-the external illumination. And as described in later sections, we used other 
+the external illumination. As described in later sections, we will use other 
 additional measures to improve the detection accuracy. 
 
 Sample OpenCV code:
@@ -280,7 +301,7 @@ We keep a buffer of 10 history frames most recently captured by the camera,
 and for every new incoming frame, we calculate the difference with the last frame 
 to get the difference image. We then apply threshold the difference image to discard 
 the small values, which are likely introduced by noises or movement within the 
-silhouettes. The resulting image we get represents the moving silhouettes over the 
+silhouettes. The resulting image we got represents the moving silhouettes over the 
 last two frames.
 
 Sample OpenCV code:
@@ -308,10 +329,10 @@ mhi(x, y) = \begin{cases} timestamp, & \mbox{if silhouette(x, y)} \neq 0 \\
 			  mhi(x, y),  & \mbox{otherwise}.
 			  \end{cases}
 \end{equation}
-The result matrix we get contains the motion information represented by timestamps. 
-Only the points which are covered by moving silhouettes in recent several frames 
+The result matrix contains the motion information represented by timestamps. 
+Only the points which are covered by moving silhouettes in recent frames 
 have non-zero values. We can use the following function to scale the timestamps 
-in the matrix to displayable range (0 – 255).
+in the matrix to displayable range (0, 255).
 
 \begin{verbatim}
 param = (self.MHI_DURATION - \
@@ -322,7 +343,7 @@ cv.CvtScale(self.mhi, self.mask,
         param)
 \end{verbatim}
 
-The resulting image we get is the motion image, shown in Figure~\ref{fig:motion}
+The resulting image is the motion image, shown in Figure~\ref{fig:motion}
 \begin{figure}[h]
 \centering
 \includegraphics[width=7cm]{motion.png}
@@ -331,7 +352,7 @@ The resulting image we get is the motion image, shown in Figure~\ref{fig:motion}
 \end{figure}
 
 Once we get the motion image, we segment it to get the major motions 
-and discard the minor ones. The larget motions are supposed to be the moving hands.
+and discard the minor ones. The largest motions are supposed to be the moving hands.
 \begin{verbatim}
 seq = cv.SegmentMotion(self.mhi, 
         self.segmask, self.storage, 
@@ -339,11 +360,11 @@ seq = cv.SegmentMotion(self.mhi,
         self.MAX_TIME_DELTA) 
 \end{verbatim}
 Once we get the sequence of the motion segments, we can compare 
-their areas to find the largest motions. The final mask we get 
+their areas to find the largest motions. The final mask 
 contains simple rectangles specifying the regions with the most 
 significant motions (as illustrated in the following image). The 
 mask can be applied to the original blurred image, so that all 
-the later calculations can only focus the white areas.
+the later calculations can focus on the white areas.
 \begin{figure}[h]
 \centering
 \includegraphics[width=7cm]{block.png}
@@ -351,8 +372,8 @@ the later calculations can only focus the white areas.
 \label{fig:motionmask}
 \end{figure}
 
-Our system implemented full motion detection support. 
-And the experiment shows, with motion detection enabled, 
+Our system implemented motion detection, and 
+the experiment shows that, with motion detection enabled, 
 the system is more reliable in noisy environment with color 
 disturbances. However, considering the performance penalty, we 
 disable motion detection feature by default.
@@ -363,10 +384,34 @@ We described how we use hue and saturation thresholding to detect skin
  color and therefore find the hands; however, faces are also in skin color. 
  The user's face becomes a noise as we interpret the found skin mask as 
  two hands. We may assume that faces are bigger than hands and use 
- the area of found contours to filter out the faces. However, this criterion is not robust. 
+ the area to filter out the faces. However, this criterion is not robust. 
 
  Hence, we chose to use OpenCV builtin face detection to find the faces 
  and wipe it out on the skin mask.
+
+Sample OpenCV code:
+ \begin{verbatim}
+faces = cv.HaarDetectObjects(
+           cv.GetMat(grayscale), 
+	   cascade, 
+	   storage, 
+	   1.2, 2, 0, 
+	   (100, 100))
+ \end{verbatim}
+
+Figure~\ref{fig:facedetect} shows a demo on face detection of OpenCV. 
+We can see that it does find the user's face and did not 
+falsely recognize the hands as faces.
+
+ \begin{figure}[h]
+ \centering
+ \includegraphics[width=7cm]{facedetection.png}
+ \caption{The face detection of OpenCV unit testing. }
+ \label{fig:facedetect}
+ \end{figure}
+
+With the rectangle of faces, we can prune the faces so that 
+the later calculation will not need to consider them.
 
 
 \subsection{Fingertips detection}
@@ -607,6 +652,7 @@ current implementation, the ratio of the frame rates between
 visual control and game is $1/4$.
 
 \section{System limitation}
+% wide lens
 
 \subsection{Noisy skin detection results}
 
