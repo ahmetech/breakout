@@ -183,6 +183,7 @@ the virtual car using two bare hands, as shown in Figure~\ref{fig:cargame}.
 \end{figure}
 
 \subsection{Machine-human interface: Bare hands}
+\label{sec:whybarehands}
 We chose to use bare hands as our machine-human interface 
 to control the game play due to the following reasons:
 
@@ -210,18 +211,151 @@ sliders to adjust system parameters.}
 \label{fig:adjusting}
 \end{figure}
 
-More details on skin detection will be explored in the next section.
+More details on skin detection will be explored in Section \ref{sec:gesture}.
 
-\section{Gesture controller}
 \subsection{System overview}
 (block diagrams) and how visual interface invoke the movement.
 
+\section{Gesture controller}
+\label{sec:gesture}
+We used a mixed method to implement the gesture controller.
+
 \subsection{Skin detection}
+\label{sec:skin}
+\paragraph{Step 1: Gaussian blur}
+Blurring helps make the skin color smoother such that we can get more complete contours. 
+We started with a median filter using a 17*17 aperture based on our homework 1 experience. 
+We then realized 17*17 aperture is to slow for the real-time controller. Thereby, we 
+changed to a Gaussian filter with 5*5 Gaussian kernel. And we ran the filter for 4 times 
+to achieve the similar result as a 17*17 median filter. It turns out even running 4 times 
+is much faster than running a median filter with large aperture.
+
+Sample OpenCV code:
+\begin{verbatim}
+cv.Smooth(bgrimg, img_temp, 
+       cv.CV_GAUSSIAN, 5, 5)
+\end{verbatim}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=7cm]{gaussian.png}
+\caption{An example of gaussian blurred image.}
+\label{fig:gaussin}
+\end{figure}
+
+\paragraph{Step 2: Color filtering in HSV color space} In this step,  
+we convert the blurred RGB image into HSV color space. In homework 1 we used 
+hue(H) and intensity(V) to identify the skin color, with the help of external illumination 
+to intensify the V value of hand skin. However, in this project, we want to reduce the 
+dependencies on the environment colors and lights, so that our game can be played in different 
+settings.
+
+We found that using saturation (S) channel is more suitable for this purpose 
+than V channel since saturation is more stable in different settings than intensity. 
+Though it still has much dependency on the environment, we do not need the help of 
+the external illumination. And as described in later sections, we used other 
+additional measures to improve the detection accuracy. 
+
+Sample OpenCV code:
+\begin{verbatim}
+# Convert to HSV color space
+cv.CvtColor(bgrimg, hsvimg, cv.CV_RGB2HSV)
+# Find regions with skin colors
+cv.InRangeS(hsvimg, low, high, skin_mask)
+\end{verbatim}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=7cm]{hsv.png}
+\caption{Skin detection in HSV color space.}
+\label{fig:hsv}
+\end{figure}
 
 \subsection{Motion detection}
+As described above, color-based skin detection has dependency on the environment. 
+We need additional instruments to help with more accurate gesture detection. As our 
+game controlling events are issued by the movement of hands, it is natural to use motion 
+detection to help with the gesture detection. The process is as follows:
+We keep a buffer of 10 history frames most recently captured by the camera, 
+and for every new incoming frame, we calculate the difference with the last frame 
+to get the difference image. We then apply threshold the difference image to discard 
+the small values, which are likely introduced by noises or movement within the 
+silhouettes. The resulting image we get represents the moving silhouettes over the 
+last two frames.
 
-\subsection{Contour finding}
-\label{sec:contour}
+Sample OpenCV code:
+\begin{verbatim}
+cv.AbsDiff(self.buf[-1], 
+           self.buf[-2], self.silh)
+cv.Threshold(self.silh, self.silh, 
+       diff_threshold, 1, cv.CV_THRESH_BINARY)
+\end{verbatim}
+
+We then use the obtained moving silhouettes to update the motion history,
+\begin{verbatim}
+cv.UpdateMotionHistory(self.silh, 
+      self.mhi, self.timestamp, 
+      self.MHI_DURATION)
+\end{verbatim}
+
+The following formula describes how what 'UpdateMotionHistory' does:
+
+\begin{equation}
+mhi(x, y) = \begin{cases} timestamp, & \mbox{if silhouette(x, y)} \neq 0 \\ 
+                          0, & \mbox{if silhouette(x, y)} = 0 \\
+			  & \mbox{ and } \\
+			  & mhi < (timestamp - duration) \\
+			  mhi(x, y),  & \mbox{otherwise}.
+			  \end{cases}
+\end{equation}
+The result matrix we get contains the motion information represented by timestamps. 
+Only the points which are covered by moving silhouettes in recent several frames 
+have non-zero values. We can use the following function to scale the timestamps 
+in the matrix to displayable range (0 – 255).
+
+\begin{verbatim}
+param = (self.MHI_DURATION - \
+      self.timestamp)*255 \
+      /self.MHI_DURATION
+cv.CvtScale(self.mhi, self.mask, 
+        255/self.MHI_DURATION,
+        param)
+\end{verbatim}
+
+The resulting image we get is the motion image, shown in Figure~\ref{fig:motion}
+\begin{figure}[h]
+\centering
+\includegraphics[width=7cm]{motion.png}
+\caption{Motion history image.}
+\label{fig:motion}
+\end{figure}
+
+Once we get the motion image, we segment it to get the major motions 
+and discard the minor ones. The larget motions are supposed to be the moving hands.
+\begin{verbatim}
+seq = cv.SegmentMotion(self.mhi, 
+        self.segmask, self.storage, 
+        self.timestamp,
+        self.MAX_TIME_DELTA) 
+\end{verbatim}
+Once we get the sequence of the motion segments, we can compare 
+their areas to find the largest motions. The final mask we get 
+contains simple rectangles specifying the regions with the most 
+significant motions (as illustrated in the following image). The 
+mask can be applied to the original blurred image, so that all 
+the later calculations can only focus the white areas.
+\begin{figure}[h]
+\centering
+\includegraphics[width=7cm]{block.png}
+\caption{An example of motion mask.}
+\label{fig:motionmask}
+\end{figure}
+
+Our system implemented full motion detection support. 
+And the experiment shows, with motion detection enabled, 
+the system is more reliable in noisy environment with color 
+disturbances. However, considering the performance penalty, we 
+disable motion detection feature by default.
 
 \subsection{Face pruning}
 \label{sec:face}
@@ -234,11 +368,206 @@ We described how we use hue and saturation thresholding to detect skin
  Hence, we chose to use OpenCV builtin face detection to find the faces 
  and wipe it out on the skin mask.
 
+
+\subsection{Fingertips detection}
+In this step, we aim to find the two fingertips (or fist tip, 
+one from each hand). Input to this step is the binary image 
+filtered by skin detection, face pruning and optional the motion mask.
+
+We first find the contours in the image and from them pick the 
+largest two contours (largest in the sense of area). They should 
+be the contours of player’s hands. 
+
+\begin{verbatim}
+contours = cv.FindContours(im,.
+              storage,
+              cv.CV_RETR_EXTERNAL,
+              cv.CV_CHAIN_APPROX_SIMPLE)
+\end{verbatim}
+
+We then simply pick the top point of each contour, and that 
+should be the finger point we want to find.
+
+The best point of using the fingertips is, it can tolerate 
+considerable disturbances of skin detection and works quite 
+well for only partially detected hands, as shown in Figure~\ref{fig:fingertip}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=7cm]{fingertip.png}
+\caption{Color disturbance.}
+\label{fig:fingertip}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=7cm]{partialhand.png}
+\caption{Partially detected hands}
+\label{fig:partial hand}
+\end{figure}
+
 \subsection{Controller algorithms}
+Now that we have the two fingertips, we can generate game 
+controlling signals according to the movements of the two points. 
+The movement (right/left, up/down) is controlled by the 
+displacement of the center point of the two fingertips, and 
+the rotation is controlled by the rotation of the line connecting 
+the two fingertips. 
+
+There are several issues for us to solve in order to achieve stable and smooth controlling experience.
+
+\paragraph{Vibrations and very fast movements} 
+Since there are always some little motions of hands even if the players try very hard 
+to hold their hands still. Besides, the noise of the camera and the changing environment 
+can also create small motions of the detected fingertips. On the other hand, too fast 
+hand movements over two frames are usually not caused by players' hand movements. 
+For example, it can be due to a sporadic wrong detection of one of the finger point. 
+
+Considering of this, we set the minimum and maximum limit for the hand movement 
+speed (currently minimum = 5 and maximum = 50 pixels/frame). Movements with speed 
+out of this range will be discarded.
+
+\paragraph{Abnormal movements}
+As mentioned, sporadic wrong detection of the fingertips may happen from time 
+to time. Even after we set the upper and lower limit of the moving speed, the 
+abnormal detection may span more than two frames. Then, though the first frame with 
+the abnormal detection will be discarded because it is beyond the legal movement 
+speed range, the second will not because its speed is calculated based on its 
+previous frame which has the same abnormal detection.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=7cm]{abnormal.png}
+\caption{A sample of sporadic abnormal movement.}
+\label{fig:abnormal}
+\end{figure}
+
+To solve this problem, we keep a list of 5 most recent history positions 
+(of the center of the two fingertips), and another buffer of the same size 
+to cache the abnormal center positions.  For each new frame, if the displacement 
+is within the legal range, we go ahead to trigger the move/rotation events, 
+and clear the abnormal buffer. Otherwise, if the displacement is larger than 
+the upper limit, we place it in the abnormal buffer. Then we scan the abnormal 
+buffer, if all the 5 points in it are one by one adjacent, we accept the abnormal 
+position as the new position and replace the history buffer with the abnormal 
+buffer. And as well, issue the movement events accordingly. (This usually 
+indicates that the player moved her/his hands very quickly to a different region.)
+
+By using this two buffer strategy, most of the sporadic wrong detections are filtered, and the game controlling is largely smoothed. Following is the code of the core algorithm:
+
+{\tiny{
+\begin{verbatim}
+# The method is generate game controlling 
+# signals, the parameter polar is the in 
+# the form of ((x,y), theta), where (x,y) 
+# is the center of the fingertips, and 
+# theta of the radian of the fingertips line
+def update_game(self, polar):
+      last = self.history[-1]
+      degree_change = abs(polar[1] - last[1]).
+      p1 = last[0]
+      p2 = polar[0]
+      # the position change from the last
+      pos_change = util.get_point_distance(p1, p2)
+
+      # if the displacement is beyond the legal range
+      if pos_change > self.max_pos_change or \
+              degree_change > self.max_degree_change: 
+              # add to abnormal buffer
+              self.buf.append(polar)
+              if len(self.buf) > self.history_size:
+                  self.buf.pop(0) 
+              if self.__check_buffer_stable():
+                  print "buf is determined to be stabe, replace history with buf"
+                  self.history = self.buf
+                  self.buf = []
+              else:
+                  print "buf is not stable, this move is abandoned."
+                  return
+      else:
+          # add to history buffer
+          self.history.append(polar)
+          self.history.pop(0)
+          self.buf = []  # clear abnormal buffer
+      # code for issue game controlling events ignored
+      # …
+      # …
+
+# Check whether all the points in the buffer are adjacent to the next
+def __check_buffer_stable(self):
+     stable = True
+     # return immediately if the buffer is not full
+     if len(self.buf) < self.history_size: return False 
+     for i in range(self.history_size - 1):
+         p1 = self.buf[i][0]
+         p2 = self.buf[i+1][0]
+         d1 = self.buf[i][1]
+         d2 = self.buf[i+1][1]
+         # center distance = movement speed
+         delta_p = util.get_point_distance(p1, p2) 
+         # angle distance = rotation speed
+         delta_d = abs(d1 - d2)   
+         if delta_p > self.max_pos_change or \
+                 delta_d > self.max_degree_change:
+             stable = False
+     return stable
+\end{verbatim}
+}}
 
 \section{Alternative designs of interface}
 % rectangle in the center.
 % not bare hands
+\subsection{One-hand controller}
+Our initial design is to control the game with one hand instead of two. 
+The movement can follow the center of the hand, and the rotation can be 
+controlled by the left and right rotation of the index finger (as shown in 
+Figure~\ref{fig:singlehand}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[height=6cm]{singlehand.png}
+\caption{Single hand controller}
+\label{fig:singlehand}
+\end{figure}
+
+There are several major problems of this design:
+\begin{itemize}
+	\item It is hard for the index finger to rotate for a large angle.
+	\item Sometimes the player wants only to rotate without movement. 
+	But with this design, players cannot keep the hand center still when rotating. 
+\end{itemize}
+
+\subsection{Motion-only controller}
+We also considered using controller which bases on motion detection only. 
+Though motion detection is good for finding the interesting area (thus good 
+for creating a mask), the contours found by it change frequently frame by frame. 
+Therefore, we cannot find a stable point basing on which the movement can be measured.
+
+\subsection{Control panel controller}
+One considerable design is to use a control panel with 8 predefined regions 
+in the frame (up, down, left, right, up-left, up-right, down-left and down-right) 
+as shown in 
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=7cm]{controlpanel.png}
+\caption{Control panel controller.}
+\label{fig:controlpanel}
+\end{figure}
+
+If the center of the fingertips is in the up region, the controller 
+will keep sending move-up signals to the game, and similarly for the other 
+regions. The rotation is still controlled by the angle of the fingertip line.
+\paragraph{Advantages}
+In this way, the movement could be very smooth and the unintended minor movements can easily be avoided.
+\paragraph{Disadvantages}
+Players need to pay much more attentions towards the control panel while playing the game. And it is hard to move quickly and accurately between different regions. (For example, from the upper-left region to the bottom-right region)
+
+\subsection{Not bare hands}
+Depending on the environment, the fingertip detection is not perfect in many settings. 
+To improve the accuracy, we can use tools like finger cots as shown in the class. 
+But in real life, no players would be happy to play the game with those additional tools. 
+The decision of using bare hands in our design is discussed in Section \ref{sec:whybarehands}.
 
 \section{Game perspectives}
 
@@ -258,7 +587,7 @@ We resize it to $400 \times 300$, and the speed boosted.
 We do not need high-resoluted image because we detected 
 blobs and contours which do not highly depend on image resolution. 
 (the details of detecting the hands are depicted in Section 
-\ref{sec:contour}.
+\ref{sec:skin}.
 
 \paragraph{Cache.} We do not calculat everything on the fly. 
 If something can be done offline, we will precompute it and 
