@@ -191,12 +191,12 @@ class Entry(object):
                     SDC.GSD_HUE_UT,
                     255,
                     skin_detector.setHueThresholdHigh)
-     cv.CreateTrackbar('l_intensityThreshold',
+     cv.CreateTrackbar('l_SaturationThreshold',
                     self.proc_win_name,
                     SDC.GSD_INTENSITY_LT,
                     255,
                     skin_detector.setIntensityThresholdLow)
-     cv.CreateTrackbar('h_intensityThreshold',
+     cv.CreateTrackbar('h_SaturationThreshold',
                     self.proc_win_name,
                     SDC.GSD_INTENSITY_UT,
                     255,
