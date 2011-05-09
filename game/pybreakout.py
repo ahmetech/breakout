@@ -7,7 +7,7 @@ from os.path import join
 from sys import exit
 from random import randrange,randint
 import math
-
+import os
 
 RGB_BLACK     = 0,0,0
 RGB_WHITE     = 255,255,255
@@ -234,7 +234,8 @@ class PyBreakout(Describer):
     "This is the main game class for PyBreakout"
     
     def __init__(self, cventry):
-        self.running = False        
+        self.running = False
+        self.dump = False
         
         self.size = GB_WIDTH, GB_HEIGHT
         self.height = self.size[1]
@@ -246,6 +247,10 @@ class PyBreakout(Describer):
         self.initializeScreen()
         self.cventry = cventry
         cventry.setCallbacks(self.onMove, self.onSetAngle)
+
+    def setDump(self, dump_or_not):
+        self.dump = dump_or_not
+        self.cventry.dump = dump_or_not
         
     def initializeScreen(self):
         #Create Gameboard with RGB_BLACK background
@@ -342,6 +347,7 @@ class PyBreakout(Describer):
         self.drawMiniPaddles()
         
         pygame.display.flip()
+
     
     def drawMiniPaddles(self):
         if(self.numLives == 0):
@@ -402,6 +408,14 @@ class PyBreakout(Describer):
     def onSetAngle(self, angle):
         #print "angle: ", angle
         self.paddle.setAngle(angle)
+
+    def dumpScreen(self):
+        if not self.dump:
+            return
+        i = 0
+        while os.path.exists('game%.4d.png' % (i,)):
+           i += 1
+        pygame.image.save(self.screen, 'game%.4d.png' % (i,))
         
     def play(self):
         "The main game loop occurs here, checks for keyboard input, updates game state, etc..."
@@ -431,7 +445,6 @@ class PyBreakout(Describer):
             if self.running:
                 if (i % 4 == 0):
                     self.cventry.run()
-                i += 1
                 self.checkBonusCollision()
                 
                 for ball in self.balls[:]:
@@ -450,6 +463,9 @@ class PyBreakout(Describer):
                 
                 self.pointsString = self.font.render(str(self.points), True, self.pointsColor)
                 self.updateScreen()
+                if (i % 4 == 0):
+                   self.dumpScreen()
+                i += 1
                 
                 #All balls have left the gameboard, need to pause and wait for Right Click
                 # or if numLives == 0, then end game.

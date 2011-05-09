@@ -2,6 +2,12 @@
 from game.pybreakout import PyBreakout
 import pygame
 import src.main
+import sys
+
+def get_dump_flag():
+    if 'dump' in sys.argv:
+        return True
+    return False
 
 def main():
     pygame.init()
@@ -10,6 +16,7 @@ def main():
 
     game = PyBreakout(src.main.Entry())
     game.initializeScreen()
+    game.setDump(get_dump_flag())
     game.play()
 
 
