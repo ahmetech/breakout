@@ -122,13 +122,22 @@ has event handling, sound handling, and screen drawing for making
 games. To fulfill the needs to gesture-controlled game development, 
 we find python has good library supports and easy for development.
 
+As a brief summary, we chose python as our developing programming 
+language due to the following reasons:
+\begin{itemize}
+	\item Python is cross-platform. We are developing on Mac OS and Windows simultaneously.
+	\item Python is dynamic and high-level. Good for rapid development.
+	\item Python is an interpreter. We don't need to recompile the codes as we are trying some parameters.
+	\item Python has abundant library support such as OpenCV and pygame. 
+\end{itemize}
+
 In this project, we are focusing on the visual interface 
 design. Hence, we do not intend to build a game from the scratch. 
 Instead, we chose to modify an exisiting game which is open sourced. 
 The original version of pybreakout can be downloaded at
 \verb"http://code.google.com/p/pybreakout/"
 
-\subsection{Game}
+\subsection{Game: breakout}
 We choose an ancient Nintendo game \emph{Breakout} and modify 
 the control of the paddle. Traditionally, the paddle can 
 move only horizontally along a predetermined line at a constant speed.
@@ -173,6 +182,36 @@ the virtual car using two bare hands, as shown in Figure~\ref{fig:cargame}.
 \label{fig:cargame}
 \end{figure}
 
+\subsection{Machine-human interface: Bare hands}
+We chose to use bare hands as our machine-human interface 
+to control the game play due to the following reasons:
+
+\begin{itemize}
+	\item It is too cubersome to wear any extra devices/markers.
+	\item We can extend our work of assignment one.
+	\item It is more intuitive to use your own hands to control the game.
+	\item You do not have to find and setup the devices before you play.
+\end{itemize}
+
+However, it also have disadvantages, and to name a few,
+\begin{itemize}
+	\item Skin segmentation is not robust.
+	\item Images from the webcamera is mostly noisy.
+	\item The environment becomes rather restricted. We cannot play in all kinds of environments.
+\end{itemize}
+To compensate the environment issues, we designed an user-interface 
+to adjust the parameters to adapt to different lighting environment as shown in Figure~\ref{fig:adjusting}. 
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=7cm]{adjustui.png}
+\caption{A screenshot on the user interface to adjust parameters. We provide 
+sliders to adjust system parameters.}
+\label{fig:adjusting}
+\end{figure}
+
+More details on skin detection will be explored in the next section.
+
 \section{Gesture controller}
 \subsection{System overview}
 (block diagrams) and how visual interface invoke the movement.
@@ -186,6 +225,14 @@ the virtual car using two bare hands, as shown in Figure~\ref{fig:cargame}.
 
 \subsection{Face pruning}
 \label{sec:face}
+We described how we use hue and saturation thresholding to detect skin
+ color and therefore find the hands; however, faces are also in skin color. 
+ The user's face becomes a noise as we interpret the found skin mask as 
+ two hands. We may assume that faces are bigger than hands and use 
+ the area of found contours to filter out the faces. However, this criterion is not robust. 
+
+ Hence, we chose to use OpenCV builtin face detection to find the faces 
+ and wipe it out on the skin mask.
 
 \subsection{Controller algorithms}
 
