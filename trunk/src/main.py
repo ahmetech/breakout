@@ -174,6 +174,7 @@ class Entry(object):
      self.setAngle = setAngleCallback
 
   def __init__(self):
+     self.dump = False
      self.move = None
      self.setAngle = None
      self.initWindows()
@@ -205,6 +206,15 @@ class Entry(object):
      img = im.resize(img, width=400)
      self.session.set_size(img)
 
+  def dumpScreen(self, img):
+    if not self.dump:
+        return
+    i = 0
+    while os.path.exists('gesture%.4d.png' % (i,)):
+      i += 1
+    cv.SaveImage('gesture%.4d.png' % (i,), img)
+
+
   def run(self):
     k = cv.WaitKey(self.msdelay)
     k = chr(k) if k > 0 else 0
@@ -232,6 +242,9 @@ class Entry(object):
 
         self.session.translate(finger_tips, img)
         if self.debug == 1: cv.ShowImage(self.proc_win_name, img)
+
+        self.dumpScreen(img)
+
     return True
 
 
