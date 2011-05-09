@@ -393,10 +393,10 @@ Sample OpenCV code:
  \begin{verbatim}
 faces = cv.HaarDetectObjects(
            cv.GetMat(grayscale), 
-	   cascade, 
-	   storage, 
-	   1.2, 2, 0, 
-	   (100, 100))
+           cascade, 
+           storage, 
+           1.2, 2, 0, 
+           (100, 100))
  \end{verbatim}
 
 Figure~\ref{fig:facedetect} shows a demo on face detection of OpenCV. 
@@ -410,21 +410,36 @@ falsely recognize the hands as faces.
  \label{fig:facedetect}
  \end{figure}
 
-With the rectangle of faces, we can prune the faces so that 
+ \begin{figure}[h]
+ \centering
+ \begin{tabular}{cc}
+ \includegraphics[width=3cm]{without_prune_face.png} &
+ \includegraphics[width=3cm]{after_face_prune.png} \\
+ (a) Before &
+ (b) After
+ \end{tabular}
+ \caption{With and without face pruning.}
+ \label{fig:faceprune}
+ \end{figure}
+
+With the rectangle of faces, we can prune the faces, 
+as shown in Figure~\ref{fig:faceprune} so that 
 the later calculation will not need to consider them.
 
 
 \subsection{Fingertips detection}
-In this step, we aim to find the two fingertips (or fist tip, 
-one from each hand). Input to this step is the binary image 
+In this step, we aim to find two fingertips (or fist tip, 
+one from each hand). The input of this step is the binary image 
 filtered by skin detection, face pruning and optional the motion mask.
 
-We first find the contours in the image and from them pick the 
-largest two contours (largest in the sense of area). They should 
-be the contours of player’s hands. 
+We find the contours of the mask and from all contours, pick 
+two largest contours (largest in the sense of area). 
+We assume that the small contours induced by the noises will be 
+filtered out in this step. Hence, the detected contours should 
+be the contours of player's hands, as shown in green in Figure~\ref{fig:fingertip} (a).
 
 \begin{verbatim}
-contours = cv.FindContours(im,.
+contours = cv.FindContours(im,
               storage,
               cv.CV_RETR_EXTERNAL,
               cv.CV_CHAIN_APPROX_SIMPLE)
@@ -435,20 +450,21 @@ should be the finger point we want to find.
 
 The best point of using the fingertips is, it can tolerate 
 considerable disturbances of skin detection and works quite 
-well for only partially detected hands, as shown in Figure~\ref{fig:fingertip}
+well for only partially detected hands, as shown in Figure~\ref{fig:fingertip} (b).
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=7cm]{fingertip.png}
-\caption{Color disturbance.}
+\begin{tabular}{cc}
+\includegraphics[height=3cm]{fingertip.png} &
+\includegraphics[height=3cm]{partialhand.png} \\
+(a) &
+(b) 
+\end{tabular}
+\caption{(a) An illustration of finger tip detection. (b) 
+Partially detected hands. We can see the fragments in the 
+detected contours.
+}
 \label{fig:fingertip}
-\end{figure}
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=7cm]{partialhand.png}
-\caption{Partially detected hands}
-\label{fig:partial hand}
 \end{figure}
 
 \subsection{Controller algorithms}
@@ -615,6 +631,7 @@ But in real life, no players would be happy to play the game with those addition
 The decision of using bare hands in our design is discussed in Section \ref{sec:whybarehands}.
 
 \section{Game perspectives}
+% physical simulation.
 
 \section{System optimization}
 % resize
