@@ -34,7 +34,7 @@ def detect_faces(bgrimg):
     if faces:
         return [f[0] for f in faces]
     else:
-        return None
+        return []
 
 def addheights(rects):
    newrects=[]
@@ -62,3 +62,17 @@ def blockfacemask(bgrimg):
         cv.Set(newimg, 0)
         cv.ResetImageROI(newimg)
     return newimg
+
+if __name__=='__main__':
+    cam = cv.CaptureFromCAM(0)
+    while True:
+        img = cv.QueryFrame(cam)
+        img = im.resize(img, width=400)
+        faces = detect_faces(img)
+        for f in faces:
+            cv.Rectangle(img, (f[0],f[1]), (f[0]+f[2], f[1]+f[3]),
+                    im.color.RED, thickness=3)
+        cv.Flip(img,None, 1)
+        cv.ShowImage('face', img)
+
+    
