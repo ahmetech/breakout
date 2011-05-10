@@ -108,6 +108,7 @@ class ImageProcessSession(object):
                   self.buf = []
               else:
                   print "buf is not stable, this move is abandoned."
+                  self.entry.move(0, 0)
                   return
 
       else:
@@ -123,9 +124,10 @@ class ImageProcessSession(object):
       theta = current[1]
       print right, down, theta
       if d > self.min_pos_change:
-          self.entry.move(right*1.5, down*1.5)
+          self.entry.move(right/4, down/4)
       else:
           print "ignore small movement"
+          self.entry.move(0,0)
           #self.__check_on_edge(current)
       self.entry.setAngle(theta/math.pi*180)
   

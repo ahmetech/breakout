@@ -246,7 +246,11 @@ class PyBreakout(Describer):
         self.startGame()
         self.initializeScreen()
         self.cventry = cventry
-        cventry.setCallbacks(self.onMove, self.onSetAngle)
+        cventry.setCallbacks(self.setMove, self.setPaddleAngle)
+
+        self.move_right = 0
+        self.move_down = 0
+        self.paddle_angle = 0
 
     def setDump(self, dump_or_not):
         self.dump = dump_or_not
@@ -409,6 +413,13 @@ class PyBreakout(Describer):
         #print "angle: ", angle
         self.paddle.setAngle(angle)
 
+    def setMove(self, right, down):
+        self.move_right = right
+        self.move_down = down
+
+    def setPaddleAngle(self, angle):
+        self.paddle_angle = angle
+
     def dumpScreen(self):
         if not self.dump:
             return
@@ -445,6 +456,17 @@ class PyBreakout(Describer):
             if self.running:
                 if (i % 4 == 0):
                     self.cventry.run()
+                # update paddle
+                if self.move_right > 0:
+                    self.paddle.moveRight(self.move_right)
+                if self.move_right < 0:
+                    self.paddle.moveLeft(-self.move_right)
+                if self.move_down > 0:
+                    self.paddle.moveDown(self.move_down)
+                if self.move_down < 0:
+                    self.paddle.moveUp(-self.move_down)
+                self.paddle.setAngle(self.paddle_angle)
+
                 self.checkBonusCollision()
                 
                 for ball in self.balls[:]:
