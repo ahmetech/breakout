@@ -74,7 +74,7 @@ However, the idea of using gesture or human body as game
 controllers appeared in 1990s. For example, 
 Freeman et al. \cite{cvicg, cvfcg} implemented a computer vision based 
 computer game system, based on image moments and orientation histograms, and 
-use the chips to provide real-time interactive responses to the players. 
+use the hardware chips to provide real-time interactive responses to the players. 
 
 More recently, H\"{a}m\"{a}l\"{a}inen \cite{childgame} designed a perceptual user interface for
 controlling a flying cartoon-animated dragon in a
@@ -114,7 +114,9 @@ Cost & high & low & high
 \label{tab:hw}
 \end{table}
 Table~\ref{tab:hw} compares different hardware devices.
-Our team considered to use Kinect to implement the system; however, 
+Our team considered to use Kinect to implement the system. 
+User's hands can be easily segmented using depth information 
+provided by Kinect. However, 
 we chose to use normal laptop web camera due to its availability as well as its 
 low cost. 
 Our webcams have frame rates ranging from 15fps to 30fps, which is adequate for real-time 
@@ -125,7 +127,7 @@ Since we chose low-end cameras as our capturing devices, we cannot design too
 complicated gesture grammar with small or fast movement. Fortunately, this 
 constraint will not be a big problem for game control. We do not need complex 
 commands in the game. As we will see in the later sections, we chose to find the 
-blobs or convex hulls of user's hands, which does not require high-end cameras. 
+blobs and convex hulls of user's hands, which does not require high-end cameras. 
 
 \subsection{Software}
 We used python as our developing programming language due to 
@@ -146,7 +148,7 @@ language due to the following reasons:
 \begin{itemize}
 	\item Python is cross-platform. We are developing on Mac OS and Windows simultaneously.
 	\item Python is dynamic and high-level. Good for rapid development.
-	\item Python is an interpreter. We don't need to recompile the codes as we are trying some parameters.
+	\item Python is an interpreter. We don't need to recompile the codes as we are trying parameters.
 	\item Python has abundant library support such as OpenCV and pygame. 
 \end{itemize}
 
@@ -203,9 +205,14 @@ the virtual car using two bare hands, as shown in Figure~\ref{fig:cargame}.
 \label{fig:cargame}
 \end{figure}
 
+Note that Figure~\ref{fig:cargame} illustrates the extensibility of 
+our interface design. We did not implement car driving game in this project.
+
 \subsection{Machine-human interface: Bare hands}
 \label{sec:whybarehands}
-We chose to use bare hands as our machine-human interface 
+We chose to implement an outside-out 
+visual system \cite{outout}, which
+uses bare hands as our machine-human interface 
 to control the game play due to the following reasons:
 
 \begin{itemize}
@@ -218,7 +225,7 @@ to control the game play due to the following reasons:
 However, it also have disadvantages, and to name a few,
 \begin{itemize}
 	\item Skin segmentation is not robust.
-	\item Images from the webcamera is mostly noisy.
+	\item Images from the webcam is mostly noisy.
 	\item The environment becomes rather restricted. We cannot play in all kinds of environments.
 \end{itemize}
 To compensate the environment issues, we designed an user-interface 
@@ -234,12 +241,45 @@ sliders to adjust system parameters.}
 
 More details on skin detection will be explored in Section \ref{sec:gesture}.
 
-\subsection{System overview}
-(block diagrams) and how visual interface invoke the movement.
+\section{System overview}
+Figure~\ref{fig:system} shows a high level illustration of 
+our system implementation. It depicts how the game 
+and the visual interface were integrated.
 
-\section{Gesture controller}
+\begin{figure}[h]
+\centering
+\includegraphics[width=7cm]{systemover.png}
+\caption{The system overview. Pygame is the main thread and when 
+initilized, it will set two callback functions \emph{onMove} and \emph{onSetAngle}
+ to gesture decision module, which deicde to move or rotate based 
+ on the visual input. When the moving and/or rotating events are triggered, 
+ it will call back to pygame and pygame will update the game play screen. }
+\label{fig:system}
+\end{figure}
+
+When the game is initialized, it will set callback funtions to gesture 
+decision module. In the event loop, the game will call gesture decision 
+module to compute the decisions. If moving or rotating events are 
+triggered, gesture decision module will call back to previously registered 
+functions. Note that these events are occurred synchronously in the same thread.
+
+\begin{table}
+\begin{tabular}{c}
+Gesture Decision Module \\
+\includegraphics[width=7cm]{gesturemodule.png}
+\end{tabular}
+\caption{Submodules in gesture decision module.}
+\label{fig:gesturemodule}
+\end{table}
+
+
+
+Table~\ref{fig:gesturemodule} shows submodules inside gesture decision module. 
+All submodules will be detailed in the next section.
+
+\section{Gesture decision module}
 \label{sec:gesture}
-We have several submodules to implement the gesture controller.
+We have several submodules to implement the gesture decision module, a.k.a. gesture controller.
 
 \subsection{Skin detection}
 \label{sec:skin}
@@ -265,14 +305,14 @@ cv.Smooth(bgrimg, img_temp,
 \end{figure}
 
 \paragraph{Step 2: Color filtering in HSV color space} In this step,  
-we convert the blurred RGB image into HSV color space. In homework 1 we used 
+we convert the blurred RGB image into HSV color space. In assignment 1 we used 
 hue(H) and intensity(V) to identify the skin color, with the help of external illumination 
 to intensify the V value of hand skin. However, in this project, we want to reduce the 
-dependencies on the environment colors and lights, so that our game can be played in different 
-settings.
+dependencies on the environment lighting, so that our game can be played in a more diverse
+setting.
 
 We found that using saturation (S) channel is more suitable for this purpose 
-than V channel since saturation is more stable in different settings than intensity. 
+than V channel since saturation is more stable than intensity. 
 Though it still has much dependency on the environment, we do not need the help of 
 the external illumination. As described in later sections, we will use other 
 additional measures to improve the detection accuracy. 
@@ -292,91 +332,6 @@ cv.InRangeS(hsvimg, low, high, skin_mask)
 \label{fig:hsv}
 \end{figure}
 
-\subsection{Motion detection}
-As described above, color-based skin detection has dependency on the environment. 
-We need additional instruments to help with more accurate gesture detection. As our 
-game controlling events are issued by the movement of hands, it is natural to use motion 
-detection to help with the gesture detection. The process is as follows:
-We keep a buffer of 10 history frames most recently captured by the camera, 
-and for every new incoming frame, we calculate the difference with the last frame 
-to get the difference image. We then apply threshold the difference image to discard 
-the small values, which are likely introduced by noises or movement within the 
-silhouettes. The resulting image we got represents the moving silhouettes over the 
-last two frames.
-
-Sample OpenCV code:
-\begin{verbatim}
-cv.AbsDiff(self.buf[-1], 
-           self.buf[-2], self.silh)
-cv.Threshold(self.silh, self.silh, 
-       diff_threshold, 1, cv.CV_THRESH_BINARY)
-\end{verbatim}
-
-We then use the obtained moving silhouettes to update the motion history,
-\begin{verbatim}
-cv.UpdateMotionHistory(self.silh, 
-      self.mhi, self.timestamp, 
-      self.MHI_DURATION)
-\end{verbatim}
-
-The following formula describes how what 'UpdateMotionHistory' does:
-
-\begin{equation}
-mhi(x, y) = \begin{cases} timestamp, & \mbox{if silhouette(x, y)} \neq 0 \\ 
-                          0, & \mbox{if silhouette(x, y)} = 0 \\
-			  & \mbox{ and } \\
-			  & mhi < (timestamp - duration) \\
-			  mhi(x, y),  & \mbox{otherwise}.
-			  \end{cases}
-\end{equation}
-The result matrix contains the motion information represented by timestamps. 
-Only the points which are covered by moving silhouettes in recent frames 
-have non-zero values. We can use the following function to scale the timestamps 
-in the matrix to displayable range (0, 255).
-
-\begin{verbatim}
-param = (self.MHI_DURATION - \
-      self.timestamp)*255 \
-      /self.MHI_DURATION
-cv.CvtScale(self.mhi, self.mask, 
-        255/self.MHI_DURATION,
-        param)
-\end{verbatim}
-
-The resulting image is the motion image, shown in Figure~\ref{fig:motion}
-\begin{figure}[h]
-\centering
-\includegraphics[width=7cm]{motion.png}
-\caption{Motion history image.}
-\label{fig:motion}
-\end{figure}
-
-Once we get the motion image, we segment it to get the major motions 
-and discard the minor ones. The largest motions are supposed to be the moving hands.
-\begin{verbatim}
-seq = cv.SegmentMotion(self.mhi, 
-        self.segmask, self.storage, 
-        self.timestamp,
-        self.MAX_TIME_DELTA) 
-\end{verbatim}
-Once we get the sequence of the motion segments, we can compare 
-their areas to find the largest motions. The final mask 
-contains simple rectangles specifying the regions with the most 
-significant motions (as illustrated in the following image). The 
-mask can be applied to the original blurred image, so that all 
-the later calculations can focus on the white areas.
-\begin{figure}[h]
-\centering
-\includegraphics[width=7cm]{block.png}
-\caption{An example of motion mask.}
-\label{fig:motionmask}
-\end{figure}
-
-Our system implemented motion detection, and 
-the experiment shows that, with motion detection enabled, 
-the system is more reliable in noisy environment with color 
-disturbances. However, considering the performance penalty, we 
-disable motion detection feature by default.
 
 \subsection{Face pruning}
 \label{sec:face}
@@ -384,7 +339,7 @@ We described how we use hue and saturation thresholding to detect skin
  color and therefore find the hands; however, faces are also in skin color. 
  The user's face becomes a noise as we interpret the found skin mask as 
  two hands. We may assume that faces are bigger than hands and use 
- the area to filter out the faces. However, this criterion is not robust. 
+ the area to filter out the faces. However, this criterion is not robust at all.
 
  Hence, we chose to use OpenCV builtin face detection to find the faces 
  and wipe it out on the skin mask.
@@ -423,8 +378,99 @@ falsely recognize the hands as faces.
  \end{figure}
 
 With the rectangle of faces, we can prune the faces, 
-as shown in Figure~\ref{fig:faceprune} so that 
-the later calculation will not need to consider them.
+as shown in Figure~\ref{fig:faceprune} (a) and (b). We 
+can easily see that in Figure~\ref{fig:faceprune} (b), the 
+face contour is wiped out; in this way, 
+the later calculation will not need to consider faces in the skin mask.
+
+\subsection{Motion detection}
+As described above, color-based skin detection has dependency on the environment. 
+We need additional instruments to obtain more accurate gesture detection. As our 
+game controlling events are issued by the movement of hands, it is natural to use motion 
+detection to help with the gesture detection. The process is as follows:
+We keep a buffer of 10 history frames most recently captured by the camera, 
+and for every new incoming frame, we calculate the difference with the last frame 
+to get the difference image. We then apply threshold on the difference image to discard 
+the small values, which are likely introduced by noises or movement within the 
+silhouettes. The resulting image we got represents the moving silhouettes over the 
+last two frames.
+
+Sample OpenCV code:
+\begin{verbatim}
+cv.AbsDiff(self.buf[-1], 
+           self.buf[-2], self.silh)
+cv.Threshold(self.silh, self.silh, 
+       diff_threshold, 1, 
+       cv.CV_THRESH_BINARY)
+\end{verbatim}
+
+We then use the moving silhouettes to update the motion history,
+\begin{verbatim}
+cv.UpdateMotionHistory(self.silh, 
+      self.mhi, self.timestamp, 
+      self.MHI_DURATION)
+\end{verbatim}
+
+The following formula describes how what 'UpdateMotionHistory' does:
+
+\begin{equation}
+mhi(x, y) = \begin{cases} timestamp, & \mbox{if silhouette(x, y)} \neq 0 \\ 
+                          0, & \mbox{if silhouette(x, y)} = 0 \\
+			  & \mbox{ and } \\
+			  & mhi < (timestamp - duration) \\
+			  mhi(x, y),  & \mbox{otherwise}.
+			  \end{cases}
+\end{equation}
+The result matrix contains the motion information represented by timestamps. 
+Only the points which are covered by moving silhouettes in recent frames 
+have non-zero values. We can use the following function to scale the timestamps 
+in the matrix to displayable range (0, 255).
+
+\begin{verbatim}
+param = (self.MHI_DURATION - \
+      self.timestamp)*255 \
+      /self.MHI_DURATION
+cv.CvtScale(self.mhi, self.mask, 
+        255/self.MHI_DURATION,
+        param)
+\end{verbatim}
+
+The resulting image fo the above codes is the motion image, shown in Figure~\ref{fig:motion}
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{cc}
+\includegraphics[width=3.7cm]{motion.png} &
+\includegraphics[width=3.7cm]{motionmask.png} \\
+(a) Motion history image.&
+(b) Motion mask.
+\end{tabular}
+\caption{Illustration of motion mask.}
+\label{fig:motion}
+\end{figure}
+
+
+Once we get the motion image, we segment it to get the major motions 
+and discard the minor ones. The largest motions are supposed to be the moving hands.
+\begin{verbatim}
+seq = cv.SegmentMotion(self.mhi, 
+        self.segmask, self.storage, 
+        self.timestamp,
+        self.MAX_TIME_DELTA) 
+\end{verbatim}
+Once we get the sequence of the motion segments, we can compare 
+their areas to find the largest motions. The final mask 
+contains simple rectangles specifying the regions with the most 
+significant motions (as illustrated in Figure~\ref{fig:motion} (b)). The 
+mask can be applied to the original blurred image, so that all 
+the later calculations can focus on the white areas.
+
+Our system implemented motion detection, and 
+the experiment shows that, with motion detection enabled, 
+the system is more reliable in noisy environment with color 
+disturbances. However, considering the performance penalty, we 
+disable motion detection feature by default.
+
 
 
 \subsection{Fingertips detection}
@@ -468,11 +514,12 @@ detected contours.
 \end{figure}
 
 \subsection{Controller algorithms}
-Now that we have the two fingertips, we can generate game 
+\label{sec:controller}
+Now that we have detected two fingertips, we can generate game 
 controlling signals according to the movements of the two points. 
 The movement (right/left, up/down) is controlled by the 
 displacement of the center point of the two fingertips, and 
-the rotation is controlled by the rotation of the line connecting 
+the rotation is controlled by the orientation of the line connecting 
 the two fingertips. 
 
 There are several issues for us to solve in order to achieve stable and smooth controlling experience.
@@ -480,7 +527,7 @@ There are several issues for us to solve in order to achieve stable and smooth c
 \paragraph{Vibrations and very fast movements} 
 Since there are always some little motions of hands even if the players try very hard 
 to hold their hands still. Besides, the noise of the camera and the changing environment 
-can also create small motions of the detected fingertips. On the other hand, too fast 
+can also create small motions of the detected fingertips. In addition, too fast 
 hand movements over two frames are usually not caused by players' hand movements. 
 For example, it can be due to a sporadic wrong detection of one of the finger point. 
 
@@ -489,11 +536,11 @@ speed (currently minimum = 5 and maximum = 50 pixels/frame). Movements with spee
 out of this range will be discarded.
 
 \paragraph{Abnormal movements}
-As mentioned, sporadic wrong detection of the fingertips may happen from time 
+As aforementioned, sporadic wrong detection of the fingertips may happen from time 
 to time. Even after we set the upper and lower limit of the moving speed, the 
-abnormal detection may span more than two frames. Then, though the first frame with 
-the abnormal detection will be discarded because it is beyond the legal movement 
-speed range, the second will not because its speed is calculated based on its 
+abnormal detection may span more than two frames. Although the first frame with 
+the abnormal detection will be discarded, the second will not because its speed 
+is calculated based on its 
 previous frame which has the same abnormal detection.
 
 \begin{figure}[h]
@@ -506,15 +553,17 @@ previous frame which has the same abnormal detection.
 To solve this problem, we keep a list of 5 most recent history positions 
 (of the center of the two fingertips), and another buffer of the same size 
 to cache the abnormal center positions.  For each new frame, if the displacement 
-is within the legal range, we go ahead to trigger the move/rotation events, 
+is within the legal range, we trigger the move/rotation events, 
 and clear the abnormal buffer. Otherwise, if the displacement is larger than 
 the upper limit, we place it in the abnormal buffer. Then we scan the abnormal 
 buffer, if all the 5 points in it are one by one adjacent, we accept the abnormal 
 position as the new position and replace the history buffer with the abnormal 
-buffer. And as well, issue the movement events accordingly. (This usually 
+buffer, and issue the movement events accordingly. (This usually 
 indicates that the player moved her/his hands very quickly to a different region.)
 
-By using this two buffer strategy, most of the sporadic wrong detections are filtered, and the game controlling is largely smoothed. Following is the code of the core algorithm:
+Following these two buffer strategies, most of the sporadic wrong detections are 
+filtered, and the game controlling is largely smoothed. The following is the 
+code of the core algorithm:
 
 {\tiny{
 \begin{verbatim}
@@ -594,7 +643,7 @@ Figure~\ref{fig:singlehand}).
 There are several major problems of this design:
 \begin{itemize}
 	\item It is hard for the index finger to rotate for a large angle.
-	\item Sometimes the player wants only to rotate without movement. 
+	\item Sometimes, the player wants only to rotate without movement. 
 	But with this design, players cannot keep the hand center still when rotating. 
 \end{itemize}
 
@@ -607,7 +656,7 @@ Therefore, we cannot find a stable point basing on which the movement can be mea
 \subsection{Control panel controller}
 One considerable design is to use a control panel with 8 predefined regions 
 in the frame (up, down, left, right, up-left, up-right, down-left and down-right) 
-as shown in 
+as shown in Figure~\ref{fig:controlpanel}.
 
 \begin{figure}[h]
 \centering
@@ -622,16 +671,39 @@ regions. The rotation is still controlled by the angle of the fingertip line.
 \paragraph{Advantages}
 In this way, the movement could be very smooth and the unintended minor movements can easily be avoided.
 \paragraph{Disadvantages}
-Players need to pay much more attentions towards the control panel while playing the game. And it is hard to move quickly and accurately between different regions. (For example, from the upper-left region to the bottom-right region)
+Players need to pay much more attentions towards the control panel 
+during playing, and it is hard to move quickly and accurately between 
+different regions. For example, from the upper-left region to the bottom-right region.
 
-\subsection{Not bare hands}
+\subsection{Wearing finger cots}
 Depending on the environment, the fingertip detection is not perfect in many settings. 
 To improve the accuracy, we can use tools like finger cots as shown in the class. 
 But in real life, no players would be happy to play the game with those additional tools. 
 The decision of using bare hands in our design is discussed in Section \ref{sec:whybarehands}.
 
 \section{Game perspectives}
-% physical simulation.
+The original version of breakout did not implement physical collision model. 
+It reflected the ball without abiding by the physical low: the law of reflection. 
+This is partly because that the original control does not allow rotating the paddle. 
+In order to make the ball react more realistically, we implemented a new collision 
+model which abides by the law of reflection.
+\begin{figure}[h]
+\centering
+\includegraphics[width=5cm]{law_of_reflection.png}
+\caption{The law of reflection.}
+\label{fig:reflection}
+\end{figure}
+
+The core data structure of the moving ball is a point in the polar coordinate system: 
+a speed and an angle. The core data structure of the paddle is a rectangle with a orientational 
+angle. With this necessary information, we can calculate the incidental angle and the 
+reflection angle accurately as the collision occurs.
+
+Despite its simplicity, this model demonstrates much more real collision response. 
+However, the current known issue of the collision is that the collision detection is 
+box overlapping detection. It is not robust if the ball or paddle is moving fast; 
+it will cause tunneling effect. To solve this issue, one has to adopt continuous 
+collision detection; this improvement will be the future work of this project.
 
 \section{System optimization}
 % resize
@@ -668,18 +740,47 @@ without sacrifacing the frame rates of the game. In our
 current implementation, the ratio of the frame rates between 
 visual control and game is $1/4$.
 
+
 \section{System limitation}
-% wide lens
+% out of screen, wide lens
+Here summarizes a list of system limitations:
 
-\subsection{Noisy skin detection results}
+\paragraph{Narrow field-of-view of webcam.} 
+During the game play, it is very easy that the hands will move out 
+the screen. If one hand move out the screen, 
+the controlling algorithm will find an alternative contour 
+to be the user's hand; this will introduce abrupt movement 
+as discussed in Section~\ref{sec:controller}. 
+To solve this issue, we may need a wide-angle lens, or 
+introduce one more camera to capture wider area. 
+Using wide-angle lens will not introduce much 
+complexity, while using one more camera will have image registration 
+and image stitching issue. 
 
-\subsection{Control usability}
+\paragraph{Unstable hand detection.}
+Hue-saturation thresholding is not a very robust 
+technique to find the user's hands. It will 
+be affected by the color temperature of the environment lighting 
+and the yellow-based cluttered background. 
+To solve this issue robustly, we can introduce 
+more robust skin detection algorithm \cite{betterskin} or 
+use Kinect camera and use the depth information to find the hands.
+
 
 \section{Conclusion and future direction}
-Our visual controlling interface can be applied to other games, 
-such as car racing games. Our system have relatively stable control on 
-orientation of two hands, and the orientational inforamtion can be 
-used to control the direction of the racing car.
+We have built a real-time gesture-based game control system. 
+We modified the original implementation of an ancient Nintendo game \emph{Breakout}, as a demonstration, 
+to enable the players to use their bare hands to control the paddle. 
+In fact, our design of visual interface can be applied to other games, 
+such as car racing games. 
+
+The future directions on this project may include, 
+\begin{itemize}
+	\item Apply more robust skin detection algorithm \cite{betterskin}.
+	\item Try Kinect.
+	\item Use continuous collision detection algorithm to solve the tunneling effects.
+	\item Use a wide-angle lens to enlarge the feasible detecting region of hands.
+\end{itemize}
 
 {\small
 \bibliographystyle{ieee}
