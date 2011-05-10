@@ -458,11 +458,11 @@ class PyBreakout(Describer):
                     self.cventry.run()
                 # update paddle
                 if self.move_right > 0:
-                    self.paddle.moveRight(self.move_right)
+                    self.paddle.moveRight(self.move_right*1.5)
                 if self.move_right < 0:
-                    self.paddle.moveLeft(-self.move_right)
+                    self.paddle.moveLeft(-self.move_right*1.5)
                 if self.move_down > 0:
-                    self.paddle.moveDown(self.move_down)
+                    self.paddle.moveDown(self.move_down*1.5)
                 if self.move_down < 0:
                     self.paddle.moveUp(-self.move_down)
                 self.paddle.setAngle(self.paddle_angle)
